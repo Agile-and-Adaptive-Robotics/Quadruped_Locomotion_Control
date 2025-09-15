@@ -6,8 +6,8 @@
 #include <CD74HC4067.h> // multiplexer library.
 
 const int num_potentiometer = 12;       // how many potentiometers are there?
-const int num_press_sensor = 12;        // and how many pressure sensors?
-const int data_length = num_potentiometer + num_press_sensor * 2;
+const int num_press_sensor = 24;        // and how many pressure sensors?
+const int data_length = num_potentiometer + num_press_sensor;
 uint8_t sensor_data[data_length];       // storage array for all sensor data.
 
 // --- Logical-to-physical mapping for potentiometers (joint angles) ---
@@ -29,34 +29,33 @@ const int R_hip_joint       = 9;
 const int R_knee_joint      = 10;
 const int R_ankle_joint     = 11;
 
+const int L_scapula_joint_ext_muscle  = 19;
+const int L_scapula_joint_flx_muscle  = 18;
+const int L_shoulder_joint_ext_muscle = 3;
+const int L_shoulder_joint_flx_muscle = 2;
+const int L_wrist_joint_ext_muscle    = 4;
+const int L_wrist_joint_flx_muscle    = 5;
 
-const int R_hip_joint_ext_muscle      = 2;
-const int R_hip_joint_flx_muscle      = 3;
-const int R_knee_joint_ext_muscle     = 4;
-const int R_knee_joint_flx_muscle     = 5;
-const int R_ankle_joint_ext_muscle    = 6;
-const int R_ankle_joint_flx_muscle    = 7;
+const int R_scapula_joint_ext_muscle  = 13;
+const int R_scapula_joint_flx_muscle  = 12;
+const int R_shoulder_joint_ext_muscle = 8;
+const int R_shoulder_joint_flx_muscle = 9;
+const int R_wrist_joint_ext_muscle    = 7;
+const int R_wrist_joint_flx_muscle    = 6;
 
-const int L_hip_joint_ext_muscle      = 8;
-const int L_hip_joint_flx_muscle      = 9;
-const int L_knee_joint_ext_muscle     = 10;
-const int L_knee_joint_flx_muscle     = 11;
-const int L_ankle_joint_ext_muscle    = 12;
-const int L_ankle_joint_flx_muscle    = 13;
+const int L_hip_joint_ext_muscle      = 1;
+const int L_hip_joint_flx_muscle      = 0;
+const int L_knee_joint_ext_muscle     = 21;
+const int L_knee_joint_flx_muscle     = 20;
+const int L_ankle_joint_ext_muscle    = 22;
+const int L_ankle_joint_flx_muscle    = 23;
 
-const int R_scapula_joint_ext_muscle  = 2;
-const int R_scapula_joint_flx_muscle  = 3;
-const int R_shoulder_joint_ext_muscle = 4;
-const int R_shoulder_joint_flx_muscle = 5;
-const int R_wrist_joint_ext_muscle    = 6;
-const int R_wrist_joint_flx_muscle    = 7;
-
-const int L_scapula_joint_ext_muscle  = 8;
-const int L_scapula_joint_flx_muscle  = 9;
-const int L_shoulder_joint_ext_muscle = 10;
-const int L_shoulder_joint_flx_muscle = 11;
-const int L_wrist_joint_ext_muscle    = 12;
-const int L_wrist_joint_flx_muscle    = 13;
+const int R_hip_joint_ext_muscle      = 10;
+const int R_hip_joint_flx_muscle      = 11;
+const int R_knee_joint_ext_muscle     = 15;
+const int R_knee_joint_flx_muscle     = 14;
+const int R_ankle_joint_ext_muscle    = 16;
+const int R_ankle_joint_flx_muscle    = 17;
 
 
 // --- Arrays for polling order (logical order) ---
@@ -68,17 +67,15 @@ const uint8_t mux_channels[num_potentiometer] = {
   R_hip_joint, R_knee_joint, R_ankle_joint
 };
 
-const uint8_t press_mux_channel_fore[num_press_sensor] = {  
+const uint8_t press_mux_channel[num_press_sensor] = {  
   L_scapula_joint_ext_muscle, L_scapula_joint_flx_muscle, 
   L_shoulder_joint_ext_muscle, L_shoulder_joint_flx_muscle, 
   L_wrist_joint_ext_muscle, L_wrist_joint_flx_muscle,
 
   R_scapula_joint_ext_muscle, R_scapula_joint_flx_muscle, 
   R_shoulder_joint_ext_muscle, R_shoulder_joint_flx_muscle, 
-  R_wrist_joint_ext_muscle, R_wrist_joint_flx_muscle
-};
-
-const uint8_t press_mux_channel_hind[num_press_sensor] = {
+  R_wrist_joint_ext_muscle, R_wrist_joint_flx_muscle,
+  
   L_hip_joint_ext_muscle, L_hip_joint_flx_muscle, 
   L_knee_joint_ext_muscle, L_knee_joint_flx_muscle, 
   L_ankle_joint_ext_muscle, L_ankle_joint_flx_muscle,
@@ -93,11 +90,11 @@ const uint8_t press_mux_channel_hind[num_press_sensor] = {
 CD74HC4067  mux(18, 17, 16, 15);  // create a new CD74HC4067 object with its four control pins
 const int pot_pin = A0;          // will be A17 on Muscle Mutt
 
-CD74HC4067 pressure_mux_fore(23, 22, 21, 20);  // create a new CD74HC4067 object 
-const int pressure_pin_fore = A5;              // read pin for the CD74HC4067
+CD74HC4067 pressure_mux_1(23, 22, 21, 20);  // create a new CD74HC4067 object 
+const int pressure_pin_1 = A5;              // read pin for the CD74HC4067
 
-CD74HC4067 pressure_mux_hind(31, 30, 29, 28);  // create a new CD74HC4067 object 
-const int pressure_pin_hind = A13;             // read pin for the CD74HC4067
+CD74HC4067 pressure_mux_2(31, 30, 29, 28);  // create a new CD74HC4067 object 
+const int pressure_pin_2 = A13;             // read pin for the CD74HC4067
 
 
 
@@ -108,7 +105,7 @@ void setup() {
     Serial.setTimeout(1); // Serial timeout
 
     pinMode(pot_pin, INPUT); // set the initial mode of the common pin.
-    pinMode(pressure_pin_fore, INPUT); // set the initial mode of the common pin.
+    pinMode(pressure_pin_1, INPUT); // set the initial mode of the common pin.
 }
 
 // Select through all multiplexor pins and update sensor data array
@@ -118,26 +115,29 @@ void read_all_joints() {
     mux.channel(mux_channels[i]);
     analogRead(pot_pin); // Dummy read! Allows the Teensy ADC pin capacitor to charge
     sensor_data[i] = analogRead(pot_pin)/4; // read potentiometer data, byte-sized
-    // Serial.print(sensor_data[i]);
-    // Serial.print("  ");
   }
   // Poll pressure sensors in logical order
   for (int i = 0; i < num_press_sensor; i++) {
-    pressure_mux_fore.channel(press_mux_channel_fore[i]);
-    analogRead(pressure_pin_fore); // Dummy read! Allows the Teensy ADC pin capacitor to charge
-    sensor_data[num_press_sensor + i] = analogRead(pressure_pin_fore)/4; // read byte-sized data
-    Serial.print(sensor_data[num_press_sensor + i]);
-    Serial.print("  ");
+    if (press_mux_channel[i] <= 11) {
+        pressure_mux_1.channel(press_mux_channel[i]+2);
+        analogRead(pressure_pin_1); // Dummy read! Allows the Teensy ADC pin capacitor to charge
+        sensor_data[num_potentiometer + i] = analogRead(pressure_pin_1)/4; // read byte-sized data
+    }
+    else if (press_mux_channel[i] > 11) {
+        pressure_mux_2.channel(press_mux_channel[i]+2-12);
+        analogRead(pressure_pin_2); // Dummy read! Allows the Teensy ADC pin capacitor to charge
+        sensor_data[num_potentiometer + i] = analogRead(pressure_pin_2)/4; // read byte-sized data
+    }
   }
-  // Poll pressure sensors in logical order
+  // --- Printing (single dynamic row) ---
   for (int i = 0; i < num_press_sensor; i++) {
-    pressure_mux_hind.channel(press_mux_channel_hind[i]);
-    analogRead(pressure_pin_hind); // Dummy read! Allows the Teensy ADC pin capacitor to charge
-    sensor_data[num_press_sensor + i] = analogRead(pressure_pin_hind)/4; // read byte-sized data
-    Serial.print(sensor_data[num_press_sensor + i]);
-    Serial.print("  ");
+    Serial.printf("%4d", i); // fixed width: 4 spaces
   }
-  Serial.println();
+  Serial.print("\n"); // carriage return → overwrite same line
+  for (int i = 12; i < data_length; i++) {
+    Serial.printf("%4d", sensor_data[i]); // fixed width: 4 spaces
+  }
+  Serial.print("\n"); // carriage return → overwrite same line
 }
 
 // When requested over serial, read and send sensor data
