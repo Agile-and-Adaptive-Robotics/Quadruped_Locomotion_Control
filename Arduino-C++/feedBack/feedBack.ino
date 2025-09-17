@@ -106,6 +106,7 @@ void setup() {
 
     pinMode(pot_pin, INPUT); // set the initial mode of the common pin.
     pinMode(pressure_pin_1, INPUT); // set the initial mode of the common pin.
+    pinMode(pressure_pin_2, INPUT); // set the initial mode of the common pin.
 }
 
 // Select through all multiplexor pins and update sensor data array
@@ -119,7 +120,7 @@ void read_all_joints() {
   // Poll pressure sensors in logical order
   for (int i = 0; i < num_press_sensor; i++) {
     if (press_mux_channel[i] <= 11) {
-        pressure_mux_1.channel(press_mux_channel[i]+2);
+        pressure_mux_1.channel(press_mux_channel[i]+2); // Add 2 due to MUX configuration
         analogRead(pressure_pin_1); // Dummy read! Allows the Teensy ADC pin capacitor to charge
         sensor_data[num_potentiometer + i] = analogRead(pressure_pin_1)/4; // read byte-sized data
     }
@@ -129,25 +130,24 @@ void read_all_joints() {
         sensor_data[num_potentiometer + i] = analogRead(pressure_pin_2)/4; // read byte-sized data
     }
   }
-  // --- Printing (single dynamic row) ---
-  for (int i = 0; i < num_press_sensor; i++) {
-    Serial.printf("%4d", i); // fixed width: 4 spaces
-  }
-  Serial.print("\n"); // carriage return → overwrite same line
-  for (int i = 12; i < data_length; i++) {
-    Serial.printf("%4d", sensor_data[i]); // fixed width: 4 spaces
-  }
-  Serial.print("\n"); // carriage return → overwrite same line
+  // // --- Printing (single dynamic row) ---
+  // for (int i = 0; i < data_length; i++) {
+  //   Serial.printf("%4d", i); // fixed width: 4 spaces
+  // }
+  // Serial.print("\n"); // carriage return → overwrite same line
+  // for (int i = 0; i < data_length; i++) {
+  //   Serial.printf("%4d", sensor_data[i]); // fixed width: 4 spaces
+  // }
+  // Serial.print("\n"); // carriage return → overwrite same line
 }
 
 // When requested over serial, read and send sensor data
 void loop() {
-  // if (Serial.available()) {
-    // raw_data = Serial.read(); 
-    // if (raw_data == 255) {
+  if (Serial.available()) {
+    raw_data = Serial.read(); 
+    if (raw_data == 255) {
       read_all_joints();
-      // Serial.write(sensor_data, data_length);
-    // }
-  // }
-  delay(200);
+      Serial.write(sensor_data, data_length);
+    }
+  }
 }

@@ -740,25 +740,23 @@ def muscle_data(
     for muscle in muscle_len.keys():
         # Find which joint this muscle crosses (assumes naming convention)
         for joint in joint_ang.keys():
-            if joint in muscle:
-                if 'L_' in joint:
-                    if 'wrist' or 'ankle' or 'scapula' or 'hip' in joint:
-                        offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
-                    elif 'shoulder' or 'knee' in joint:
-                        offset = - joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
-                    else:
-                        print("Unidentifiable L_ joint in offset calculation.", file = sys.stderr)
-                if 'R_' in joint:
-                    if 'wrist' or 'ankle' or 'scapula' or 'hip' in joint:
-                        offset = - joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
-                    elif 'shoulder' or 'knee' in joint:
-                        offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
-                    else:
-                        print("Unidentifiable R_ joint in offset calculation.", file = sys.stderr)
-                if 'flx' in muscle:
-                    antagonist_muscle = muscle.replace('flx', 'ext')
-                    muscle_len[muscle][comm_index]            = muscle_L0[muscle]            + offset
-                    muscle_len[antagonist_muscle][comm_index] = muscle_L0[antagonist_muscle] - offset
+            if 'wrist' in joint:
+                offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
+            elif 'ankle' in joint:
+                offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
+            elif 'scapula' in joint:
+                offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
+            elif 'hip' in joint:
+                offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
+            elif 'knee' in joint:
+                offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
+            elif 'shoulder' in joint:
+                offset = joint_ang[joint][comm_index] * (joint_diam[joint] / 2)
+            else:
+                print("Unidentifiable L_ joint in offset calculation.", file = sys.stderr)
+            antagonist_muscle = muscle.replace('flx', 'ext')
+            muscle_len[muscle][comm_index]            = muscle_L0[muscle]            + offset
+            muscle_len[antagonist_muscle][comm_index] = muscle_L0[antagonist_muscle] - offset
 
     # Update muscle velocities (second order backwards difference approximation to remove noise. requires index > 1)
     if comm_index > 1:
@@ -916,8 +914,12 @@ def run_sims(dt,
         # Initial sensory data read
         sense_port.write(bytearray([255]))
         for joint in potentiometer_data.keys():
-            potentiometer_data[joint]   = np.frombuffer(sense_port.read(1), dtype=np.uint8)
-            potentiometer_data_0[joint] = potentiometer_data[joint]
+            if 'L_' in joint:
+                potentiometer_data[joint]   = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+                potentiometer_data_0[joint] = potentiometer_data[joint]
+            elif 'R_' in joint:
+                potentiometer_data[joint]   = - np.frombuffer(sense_port.read(1), dtype=np.uint8) # Potentiometer configuration creates signals of the opposite sign on the right and left sides.
+                potentiometer_data_0[joint] = potentiometer_data[joint]
         for muscle in pressure_sensor_data.keys():
             pressure_sensor_data[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
             pressure_sensor_data_0[muscle] = pressure_sensor_data[muscle]
@@ -1063,7 +1065,10 @@ def run_sims(dt,
                 # Get sensory data
                 sense_port.write(bytearray([255]))
                 for joint in potentiometer_data.keys():
-                    potentiometer_data[joint] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+                    if 'L_' in joint:
+                        potentiometer_data[joint] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+                    elif 'R_' in joint:
+                        potentiometer_data[joint] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
                 for muscle in pressure_sensor_data.keys():
                     pressure_sensor_data[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
 
@@ -1207,8 +1212,8 @@ def main():
     muscle_mutt = True
     make_vid    = False
 
-    spike_port_name = "/dev/cu.usbmodem164372401" # port to send spikes to the Teensy
-    sense_port_name = "/dev/cu.usbmodem157539901" # port from Teensy which obtains sense data
+    spike_port_name = "/dev/cu.usbmodem164142201" # port to send spikes to the Teensy
+    sense_port_name = "/dev/cu.usbmodem164372401" # port from Teensy which obtains sense data
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
 
     cpg_gsyn = 1.7  # defines RG oscillation speed (small adjustments make a big difference!)
