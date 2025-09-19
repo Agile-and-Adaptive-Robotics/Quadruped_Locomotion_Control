@@ -987,7 +987,9 @@ def run_sims(dt,
         sense_port.reset_input_buffer()  # Clear any existing data in the buffer
         sense_port.reset_output_buffer() # Clear any existing data in the buffer    
 
-        # Initial sensory data read
+        # Sensor calibration
+        spike_port.write(bytearray([99]))
+        clock.sleep(4)
         sense_port.write(bytearray([255]))
         for joint in potentiometer_data.keys():
             if 'L_' in joint:

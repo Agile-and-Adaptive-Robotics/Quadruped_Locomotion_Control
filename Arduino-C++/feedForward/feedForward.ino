@@ -162,6 +162,23 @@ void loop() {
         buffer_index++;
     } 
 
+    else if (buffer_index == 0 && raw_data == 99) {
+        hipLEX.ShouldPulseStart();
+        hipLFL.ShouldPulseStart();
+        hipREX.ShouldPulseStart();
+        hipRFL.ShouldPulseStart();
+        kneeREX.ShouldPulseStart();
+        ankleREX.ShouldPulseStart();
+        kneeLEX.ShouldPulseStart();
+        ankleLEX.ShouldPulseStart();
+        shoulderREX.ShouldPulseStart();
+        wristREX.ShouldPulseStart();
+        shoulderLEX.ShouldPulseStart();
+        wristLEX.ShouldPulseStart();
+
+        delay(5000);
+    } 
+
     else if (buffer_index != 0) {
         buffer[buffer_index] = raw_data;
         buffer_index++;
