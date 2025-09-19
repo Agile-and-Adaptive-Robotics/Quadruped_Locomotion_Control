@@ -58,31 +58,31 @@ const int R_ankle_joint_ext_muscle    = 16;
 const int R_ankle_joint_flx_muscle    = 17;
 
 
-// --- Arrays for polling order (logical order) ---
+// --- Arrays for polling order (order used by Python) ---
 
 const uint8_t mux_channels[num_potentiometer] = {
-  L_scapula_joint, L_shoulder_joint, L_wrist_joint, 
-  R_scapula_joint, R_shoulder_joint, R_wrist_joint,
   L_hip_joint, L_knee_joint, L_ankle_joint, 
-  R_hip_joint, R_knee_joint, R_ankle_joint
+  R_hip_joint, R_knee_joint, R_ankle_joint, 
+  L_scapula_joint, L_shoulder_joint, L_wrist_joint, 
+  R_scapula_joint, R_shoulder_joint, R_wrist_joint
 };
 
 const uint8_t press_mux_channel[num_press_sensor] = {  
-  L_scapula_joint_ext_muscle, L_scapula_joint_flx_muscle, 
-  L_shoulder_joint_ext_muscle, L_shoulder_joint_flx_muscle, 
-  L_wrist_joint_ext_muscle, L_wrist_joint_flx_muscle,
-
-  R_scapula_joint_ext_muscle, R_scapula_joint_flx_muscle, 
-  R_shoulder_joint_ext_muscle, R_shoulder_joint_flx_muscle, 
-  R_wrist_joint_ext_muscle, R_wrist_joint_flx_muscle,
-  
-  L_hip_joint_ext_muscle, L_hip_joint_flx_muscle, 
-  L_knee_joint_ext_muscle, L_knee_joint_flx_muscle, 
-  L_ankle_joint_ext_muscle, L_ankle_joint_flx_muscle,
-
   R_hip_joint_ext_muscle, R_hip_joint_flx_muscle, 
   R_knee_joint_ext_muscle, R_knee_joint_flx_muscle, 
-  R_ankle_joint_ext_muscle, R_ankle_joint_flx_muscle
+  R_ankle_joint_ext_muscle, R_ankle_joint_flx_muscle,
+ 
+  L_hip_joint_ext_muscle, L_hip_joint_flx_muscle, 
+  L_knee_joint_ext_muscle, L_knee_joint_flx_muscle, 
+  L_ankle_joint_ext_muscle, L_ankle_joint_flx_muscle, 
+  
+  R_scapula_joint_ext_muscle, R_scapula_joint_flx_muscle, 
+  R_shoulder_joint_ext_muscle, R_shoulder_joint_flx_muscle, 
+  R_wrist_joint_ext_muscle, R_wrist_joint_flx_muscle, 
+  
+  L_scapula_joint_ext_muscle, L_scapula_joint_flx_muscle, 
+  L_shoulder_joint_ext_muscle, L_shoulder_joint_flx_muscle, 
+  L_wrist_joint_ext_muscle, L_wrist_joint_flx_muscle
 };
 
 
