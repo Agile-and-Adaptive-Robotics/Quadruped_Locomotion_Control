@@ -734,6 +734,7 @@ def muscle_data(
             muscle_insertion_dynamic_cart,
             joint_ang,
             muscle_L0,
+            BPA_L0,
             muscle_len,
             muscle_vel,
             muscle_ten,
@@ -745,11 +746,11 @@ def muscle_data(
     based on potentiometer and pressure sensor readings.
     """
     comm_index = int(comm_index)  # Ensure comm_index is an integer
-    convert = (3/2 * np.pi) / 255  # TODO: Measure this
+    angle_conversion = (3/2 * np.pi) / 255  # TODO: Measure this
 
     # Update joint angles
     for joint in joint_ang.keys():
-        joint_ang[joint][comm_index] = (int(potentiometer_data[joint]) - int(potentiometer_data_0[joint])) * convert
+        joint_ang[joint][comm_index] = (int(potentiometer_data[joint]) - int(potentiometer_data_0[joint])) * angle_conversion
 
     # Update muscle lengths
     for muscle in muscle_len.keys():
@@ -777,10 +778,19 @@ def muscle_data(
         for muscle in muscle_vel.keys():
             muscle_vel[muscle][comm_index] = 0.0
 
+    # Tension equation by Ben Bolen
+    c_0 = 0.5682
+    c_1 = 4.254
+    c_2 = 0.5597
+
+    pressure_conversion = 151.6 * (5/255) - 117.58 # Conversion of analog to kPa from Ben Bolen KneeTest.m
+    
     # Update muscle tensions from pressure sensor
     for muscle in muscle_ten.keys():
-        muscle_ten[muscle][comm_index] = int(pressure_sensor_data[muscle]) - int(pressure_sensor_data_0[muscle])
-
+        e = ( muscle_len[muscle] - muscle_L0[muscle] ) + BPA_L0[muscle]
+        P = ( pressure_sensor_data[muscle] - pressure_sensor_data_0[muscle] ) * pressure_conversion
+        muscle_ten[muscle][comm_index] = c_0 * (np.exp(-c_1 * e) - 1) + (P * np.exp(-c_2 * e**2))
+ 
     return
 
 
@@ -961,7 +971,7 @@ def run_sims(dt,
             theta_r  = np.arctan2(muscle_insertion_rest_cart[muscle][0], muscle_insertion_rest_cart[muscle][1])
             muscle_insertion_rest_polar[muscle] = (h, theta_r)
         
-        # Muscle + tendon initial lengths TODO: I think we need muscle resting lengths as well (measured) as resting total muscle+tendon lengths (obtained analytically)
+        # Muscle + tendon initial lengths, to be calculated analytically
         muscle_L0 = {name: 0.0 for name in muscles_list}
         for muscle in muscle_L0:
             if   'hip_joint_flx_muscle' in muscle:        muscle_L0[muscle] = 0.0
@@ -976,6 +986,22 @@ def run_sims(dt,
             elif 'shoulder_joint_ext_muscle' in muscle:   muscle_L0[muscle] = 0.0
             elif 'wrist_joint_flx_muscle' in muscle:      muscle_L0[muscle] = 0.0
             elif 'wrist_joint_ext_muscle' in muscle:      muscle_L0[muscle] = 0.0
+
+        # BPA resting lengths for tension calculation.
+        BPA_L0 = {name: 0.0 for name in muscles_list}
+        for muscle in muscles_list:
+            if   'hip_joint_flx_muscle' in muscle:        BPA_L0[muscle] = 0.0
+            elif 'hip_joint_ext_muscle' in muscle:        BPA_L0[muscle] = 0.0
+            elif 'knee_joint_flx_muscle' in muscle:       BPA_L0[muscle] = 0.0
+            elif 'knee_joint_ext_muscle' in muscle:       BPA_L0[muscle] = 0.0
+            elif 'ankle_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.0
+            elif 'ankle_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.0
+            elif 'scapula_joint_flx_muscle' in muscle:    BPA_L0[muscle] = 0.0
+            elif 'scapula_joint_ext_muscle' in muscle:    BPA_L0[muscle] = 0.0
+            elif 'shoulder_joint_flx_muscle' in muscle:   BPA_L0[muscle] = 0.0
+            elif 'shoulder_joint_ext_muscle' in muscle:   BPA_L0[muscle] = 0.0
+            elif 'wrist_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.0
+            elif 'wrist_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.0
 
         # --- Teensy/Serial Initialization ---
         spike_port = serial.Serial(port=spike_port_name, baudrate=9600, timeout=0.1)
@@ -1004,23 +1030,24 @@ def run_sims(dt,
         
         # Initial joint/muscle value calculation
         muscle_data(
-            pressure_sensor_data_0,
-            pressure_sensor_data,
-            potentiometer_data_0,
-            potentiometer_data,
-            joint_offset,
-            muscle_length_static,
-            muscle_length_dynamic,
-            muscle_wrap,
-            muscle_insertion_rest_polar,
-            muscle_insertion_dynamic_cart,
-            joint_ang,
-            muscle_L0,
-            muscle_len,
-            muscle_vel,
-            muscle_ten,
-            comm_dt,
-            comm_index)
+            pressure_sensor_data_0=pressure_sensor_data_0,
+            pressure_sensor_data=pressure_sensor_data,
+            potentiometer_data_0=potentiometer_data_0,
+            potentiometer_data=potentiometer_data,
+            joint_offset=joint_offset,
+            muscle_length_static=muscle_length_static,
+            muscle_length_dynamic=muscle_length_dynamic,
+            muscle_wrap=muscle_wrap,
+            muscle_insertion_rest_polar=muscle_insertion_rest_polar,
+            muscle_insertion_dynamic_cart=muscle_insertion_dynamic_cart,
+            joint_ang=joint_ang,
+            muscle_L0=muscle_L0,
+            BPA_L0=BPA_L0,
+            muscle_len=muscle_len,
+            muscle_vel=muscle_vel,
+            muscle_ten=muscle_ten,
+            comm_dt=comm_dt,
+            comm_index=comm_index)
 
     else:
         pulse_data = np.zeros([len(t), num_spk_out])   # Simulated Teensy pulse data
@@ -1159,23 +1186,24 @@ def run_sims(dt,
 
                 #  joint/muscle value calculation
                 muscle_data(
-                    pressure_sensor_data_0,
-                    pressure_sensor_data,
-                    potentiometer_data_0,
-                    potentiometer_data,
-                    joint_offset,
-                    muscle_length_static,
-                    muscle_length_dynamic,
-                    muscle_wrap,
-                    muscle_insertion_rest_polar,
-                    muscle_insertion_dynamic_cart,
-                    joint_ang,
-                    muscle_L0,
-                    muscle_len,
-                    muscle_vel,
-                    muscle_ten,
-                    comm_dt,
-                    comm_index)
+                    pressure_sensor_data_0=pressure_sensor_data_0,
+                    pressure_sensor_data=pressure_sensor_data,
+                    potentiometer_data_0=potentiometer_data_0,
+                    potentiometer_data=potentiometer_data,
+                    joint_offset=joint_offset,
+                    muscle_length_static=muscle_length_static,
+                    muscle_length_dynamic=muscle_length_dynamic,
+                    muscle_wrap=muscle_wrap,
+                    muscle_insertion_rest_polar=muscle_insertion_rest_polar,
+                    muscle_insertion_dynamic_cart=muscle_insertion_dynamic_cart,
+                    joint_ang=joint_ang,
+                    muscle_L0=muscle_L0,
+                    BPA_L0=BPA_L0,
+                    muscle_len=muscle_len,
+                    muscle_vel=muscle_vel,
+                    muscle_ten=muscle_ten,
+                    comm_dt=comm_dt,
+                    comm_index=comm_index)
                 
                 # Sync MuJoCo viewer (Verify that the simulation reads is reading sensor data correctly.)
 
