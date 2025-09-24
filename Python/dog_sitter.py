@@ -66,40 +66,6 @@ def mujoco_model(xml_path):
 
     return model, data
 
-def stim_to_act(stim):
-    """
-    Convert neural potential to muscle activation [0, 1].
-    """
-    # converted the stim2tenstion curve in animatlab
-    steepness = 0.121465
-    x_offset = -65
-    y_offset = -0.002297
-    amp = 1.0
-    act = amp/(1 + np.exp(steepness*(x_offset-stim))) + y_offset
-    return min(max(act, 0), 1)
-
-def non_to_spk(x,half_point):
-    """
-    Convert neural potential to muscle activation [0, 1] (spiking version).
-    """
-    # converted the stim2tenstion curve in animatlab
-    steepness = 0.121465
-    y_offset = -0.002297
-    amp = 3.5
-    y = amp/(1 + np.exp(steepness*(half_point-x))) + y_offset
-
-    # x1 = -100
-    # x2 = -40
-    # y1 = 0
-    # y2 = 1
-
-    # m = (y2-y1)/(x2-x1)
-    # b = y1 - ((y2-y1)/(x2-x1)) * x1
-
-    # y = m*x + b
-
-    return min(max(y, 0), amp)
-
 def plot_sns(time, data):
     """
     Plots a series of subplots for left and right side muscle activities using given time and data arrays.
@@ -326,9 +292,9 @@ def isolate_cycle(t,vec):
     except:
         return np.zeros(len(t)), np.zeros(len(t))
     
-def calc_mse(x1, y1, x2, y2):
-    y1_interp = np.interp(x2, x1, y1)
-    mse = np.mean((y1_interp - y2)**2)
+def calc_mse(x_1, y_1, x2, y2):
+    y_1_interp = np.interp(x2, x_1, y_1)
+    mse = np.mean((y_1_interp - y2)**2)
     return mse
 
 def plot_gaits(time, joint_ang, savename=''):
@@ -374,8 +340,8 @@ def plot_gaits(time, joint_ang, savename=''):
     # print('Animal Gait Time: ', anim_time[-1])
     # print('Sim Gait Time:    ', R_hip_time[-1])
 
-    hip_mse = round(calc_mse(anim_time, anim_hip, R_hip_time, R_hip_gait),5)
-    knee_mse = round(calc_mse(anim_time, anim_knee, R_knee_time, R_knee_gait),5)
+    hip_mse   = round(calc_mse(anim_time, anim_hip,   R_hip_time,   R_hip_gait),5)
+    knee_mse  = round(calc_mse(anim_time, anim_knee,  R_knee_time,  R_knee_gait),5)
     ankle_mse = round(calc_mse(anim_time, anim_ankle, R_ankle_time, R_ankle_gait),5)
 
     # print('Hip MSE:   ', hip_mse)
@@ -458,7 +424,7 @@ def plot_gaits(time, joint_ang, savename=''):
     print("... Gait plots created")
 
 # Plotter Function entirely vibe-coded with ChatGPT
-def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, save_folder='python/fig_plots'):
+def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, muscle_ten, save_folder='python/fig_plots'):
     """
     Combined per-leg master plot.
     Layout: 3 rows (angle, length, velocity) x 4 columns (LF, RF, LH, RH).
@@ -474,11 +440,15 @@ def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, save_folde
     }
 
     # color mapping per joint type (consistent across legs)
+    # Updated so hip and scapula share the same color, and shoulder and knee share the same color.
     joint_color_map = {
+        # hip and scapula -> same color
         'hip': 'tab:blue',
-        'shoulder': 'tab:blue',
+        'scapula': 'tab:blue',
+        # shoulder and knee -> same color (different from hip/scapula)
+        'shoulder': 'tab:orange',
         'knee': 'tab:orange',
-        'scapula': 'tab:orange',
+        # ankle and wrist keep existing matching color
         'ankle': 'tab:green',
         'wrist': 'tab:green'
     }
@@ -504,12 +474,12 @@ def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, save_folde
             rgb = mcolors.to_rgb('k')
         return tuple(r + (1.0 - r) * amount for r in rgb)
 
-    # Use GridSpec to make angle(1 row), length(3 stacked subrows), velocity(1 row)
+    # Use GridSpec to make angle(1 row), length(3 stacked subrows), velocity(1 row), and tension (3 stacked subrows)
     import matplotlib.gridspec as gridspec
-    # height ratios: angle=1, each length subrow=0.33, velocity=1 (so total length block ~= previous single row)
-    height_ratios = [1, 0.33, 0.33, 0.33, 1]
-    fig = plt.figure(figsize=(20, 14))
-    gs = gridspec.GridSpec(nrows=5, ncols=4, height_ratios=height_ratios, hspace=0.4, figure=fig)
+    # height ratios: angle=1, each length subrow=0.33, velocity=1, each tension subrow=0.33
+    height_ratios = [1, 0.33, 0.33, 0.33, 1, 0.33, 0.33, 0.33]
+    fig = plt.figure(figsize=(20, 18))
+    gs = gridspec.GridSpec(nrows=8, ncols=4, height_ratios=height_ratios, hspace=0.4, figure=fig)
 
     # Plot angles (top row)
     for col, (leg, joints) in enumerate(leg_joints.items()):
@@ -540,12 +510,12 @@ def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, save_folde
             # Title each small length subplot by joint name for clarity
             jlabel = joint.replace('_joint', '').replace('L_', '').replace('R_', '').capitalize()
             ax.set_title(f"{leg} - {jlabel} Length")
-            ax.set_ylabel('Length (mm)')
+            ax.set_ylabel('Length (m)')
             if plotted:
                 ax.legend(fontsize='x-small')
             ax.grid(True, alpha=0.25)
 
-    # Plot velocities (bottom row)
+    # Plot velocities (second-to-bottom row)
     for col, (leg, joints) in enumerate(leg_joints.items()):
         ax = fig.add_subplot(gs[4, col])
         plotted = False
@@ -557,17 +527,37 @@ def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, save_folde
                 ax.plot(muscle_vel[m], marker='.', linestyle='-', color=plot_col, label=m)
                 plotted = True
         ax.set_title(f"{leg} - Muscle Velocity")
-        ax.set_ylabel('Velocity (mm/s)')
+        ax.set_ylabel('Velocity (m/s)')
         ax.set_xlabel('Time (samples)')
         if plotted:
             ax.legend(fontsize='small')
         ax.grid(True, alpha=0.3)
+
+    # Plot tensions: three stacked subrows under each limb column matching the length subplots style
+    for col, (leg, joints) in enumerate(leg_joints.items()):
+        for j_idx, joint in enumerate(joints):
+            ax = fig.add_subplot(gs[5 + j_idx, col])
+            plotted = False
+            # find muscles related to this joint
+            muscles = [m for m in muscle_ten.keys() if joint.replace('_joint', '') in m]
+            for m in muscles:
+                base_col = get_color_for_joint(joint)
+                plot_col = lighten_color(base_col, amount=0.5) if is_flexor(m) else base_col
+                ax.plot(muscle_ten[m], marker='.', linestyle='-', color=plot_col, label=m)
+                plotted = True
+            jlabel = joint.replace('_joint', '').replace('L_', '').replace('R_', '').capitalize()
+            ax.set_title(f"{leg} - {jlabel} Tension")
+            ax.set_ylabel('Tension (N)')
+            if plotted:
+                ax.legend(fontsize='x-small')
+            ax.grid(True, alpha=0.25)
 
     plt.tight_layout()
     fname = os.path.join(save_folder, 'legs_master_summary.png')
     plt.savefig(fname, dpi=150, bbox_inches='tight')
     plt.close(fig)
     print("... Legs master summary created ->", fname)
+
 
 
 def plot_times(times):
@@ -721,19 +711,41 @@ def wrist_inputs(length_e, length_f, velocity_e, velocity_f, tension_e, tension_
 
     return np.array([Ia_e, Ia_f, Ib_e, Ib_f, II_f])
 
+def stim_to_act(stim):
+    """
+    Convert neural potential to muscle activation [0, 1].
+    """
+    # converted the stim2tenstion curve in animatlab
+    steepness = 0.121465
+    x_offset = -65
+    y_offset = -0.002297
+    amp = 1.0
+    act = amp/(1 + np.exp(steepness*(x_offset-stim))) + y_offset
+    return min(max(act, 0), 1)
+
+
+def non_to_spk(x,half_point,bandwidth):
+    """
+    Convert neural potential to muscle activation [0, 1] (spiking version).
+    """
+    # converted the stim2tenstion curve in animatlab
+    steepness = 10/bandwidth
+    y_offset = 0.01
+    x_offset = half_point
+    amp = 2
+    y = amp/(1 + np.exp(steepness*(x_offset-x))) + y_offset
+
+    return min(max(y, 0), amp)
+
+
 def muscle_data(
-            pressure_sensor_data_0,
             pressure_sensor_data,
-            potentiometer_data_0,
             potentiometer_data,
-            joint_offset,
             muscle_length_static,
             muscle_length_dynamic,
-            muscle_wrap,
             muscle_insertion_rest_polar,
-            muscle_insertion_dynamic_cart,
             joint_ang,
-            muscle_L0,
+            joint_radius,
             BPA_L0,
             muscle_len,
             muscle_vel,
@@ -750,27 +762,76 @@ def muscle_data(
 
     # Update joint angles
     for joint in joint_ang.keys():
-        joint_ang[joint][comm_index] = (int(potentiometer_data[joint]) - int(potentiometer_data_0[joint])) * angle_conversion
+        joint_ang[joint][comm_index] = (int(potentiometer_data[joint][comm_index]) - int(potentiometer_data[joint][0])) * angle_conversion
 
     # Update muscle lengths
     for muscle in muscle_len.keys():
         for joint in joint_ang.keys():
             if joint in muscle:
-                if 'wrist' or 'ankle' or 'knee' or 'shoulder' or 'scapula' or 'hip' in muscle:
-                    r = muscle_insertion_rest_polar[muscle][0]
-                    theta = muscle_insertion_rest_polar[muscle][1] + joint_ang[joint]
-                    muscle_insertion_dynamic_cart[muscle] = [ r * np.cos(theta) - joint_offset[muscle][0],
-                                                              r * np.sin(theta) - joint_offset[muscle][1]]
-                    x_0 = muscle_insertion_dynamic_cart[muscle][0]
-                    x_1 = muscle_wrap[muscle][0]
-                    y_0 = muscle_insertion_dynamic_cart[muscle][1]
-                    y_1 = muscle_wrap[muscle][1]
-                    muscle_length_dynamic[muscle] = 1000 * (np.sqrt((x_0-x_1)**2+(y_0-y_1)**2))
-                    muscle_len[muscle] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
-                else: 
-                    print('error!')
+                if any(j in muscle for j in ('wrist', 'ankle')):
+                    r  = joint_radius[muscle] # measured directly
 
-    # Update muscle velocities (second order backwards difference approximation to remove noise. requires index > 1)
+                    if 'ext' in muscle:
+                        theta_0 = - joint_ang[joint][comm_index]
+                    else:
+                        theta_0 = joint_ang[joint][comm_index]
+                        
+                    muscle_length_dynamic[muscle] = r * theta_0
+                    muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
+
+                    # r = muscle_insertion_rest_polar[muscle][0]
+                    # if 'ext' in muscle:
+                    #     theta_0 = - joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
+                    # else: 
+                    #     theta_0 = - joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
+
+                    # x_0 = r * np.cos(theta_0)
+                    # x_1 = r * np.sin(theta_0)
+                    # y_0 = muscle_wrap[muscle][0] #+ joint_offset[muscle][0]
+                    # y_1 = muscle_wrap[muscle][1] #+ joint_offset[muscle][1]
+
+                    # muscle_length_dynamic[muscle] = np.sqrt((x_0-x_1)**2+(y_0-y_1)**2) 
+                    # muscle_len[muscle][comm_index] = muscle_length_dynamic[muscle] # + muscle_length_static[muscle] # m/s
+                elif any(j in muscle for j in ('knee', 'shoulder')):
+                    r  = joint_radius[muscle] # measured directly
+
+                    if 'ext' in muscle:
+                        theta_0 = joint_ang[joint][comm_index]
+                    else:
+                        theta_0 = - joint_ang[joint][comm_index]
+                        
+                    muscle_length_dynamic[muscle] = r * theta_0
+                    muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
+
+                    # r = muscle_insertion_rest_polar[muscle][0]
+                    # if 'ext' in muscle:
+                    #     theta_0 = joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
+                    # else: 
+                    #     theta_0 = joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
+
+                    # x_0 = r * np.cos(theta_0) 
+                    # y_0 = r * np.sin(theta_0) 
+                    # x_1 = muscle_wrap[muscle][0] - joint_offset[muscle][0]
+                    # y_1 = muscle_wrap[muscle][1] - joint_offset[muscle][1]
+
+                    # muscle_length_dynamic[muscle] = np.sqrt((x_0-x_1)**2+(y_0-y_1)**2) 
+                    # muscle_len[muscle][comm_index] =  muscle_length_dynamic[muscle] # + muscle_length_static[muscle] # m/s
+                elif any(j in muscle for j in ('hip', 'scapula')):
+                    r  = joint_radius[muscle] # measured directly
+
+                    if 'ext' in muscle:
+                        theta_0 = joint_ang[joint][comm_index]
+                    else:
+                        theta_0 = - joint_ang[joint][comm_index]
+                        
+                    muscle_length_dynamic[muscle] = r * theta_0
+                    muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
+                else: 
+                    print('ERROR! with', muscle, 'muscle')
+
+    # print("\n\n")
+
+    # Update muscle velocities (m/s) (second order backwards difference approximation to remove noise. requires index > 1)
     if comm_index > 1:
         for muscle in muscle_vel.keys():
             muscle_vel[muscle][comm_index] = (3 * muscle_len[muscle][comm_index] - 4 * muscle_len[muscle][comm_index - 1] + muscle_len[muscle][comm_index - 2]) / (2 * comm_dt)
@@ -783,13 +844,24 @@ def muscle_data(
     c_1 = 4.254
     c_2 = 0.5597
 
-    pressure_conversion = 151.6 * (5/255) - 117.58 # Conversion of analog to kPa from Ben Bolen KneeTest.m
+    pressure_conversion = 700 / 215 # Eyeballed conversion to kPa
     
     # Update muscle tensions from pressure sensor
     for muscle in muscle_ten.keys():
-        e = ( muscle_len[muscle] - muscle_L0[muscle] ) + BPA_L0[muscle]
-        P = ( pressure_sensor_data[muscle] - pressure_sensor_data_0[muscle] ) * pressure_conversion
-        muscle_ten[muscle][comm_index] = c_0 * (np.exp(-c_1 * e) - 1) + (P * np.exp(-c_2 * e**2))
+        ep = ( muscle_len[muscle][comm_index] - muscle_len[muscle][0] ) + BPA_L0[muscle]
+        P = ( pressure_sensor_data[muscle][comm_index] - pressure_sensor_data[muscle][0] ) * pressure_conversion
+
+        muscle_ten[muscle][comm_index] = c_0 * (np.exp(float(-c_1 * ep)) - 1) + (P * np.exp(float(-c_2 * ep**2)))
+
+    # Print joint status to terminal
+    sys.stdout.write(f"\033[{len(joint_ang.keys())}A")
+     # Update muscle lengths
+    for muscle in muscle_len.keys():
+        for joint in joint_ang.keys():
+            if joint in muscle:
+                sys.stdout.write("\033[K")
+                # sys.stdout.write(f"{muscle:<30} {round((joint_ang[joint][comm_index]+muscle_insertion_rest_polar[muscle][1]),2):<10}  {round(muscle_length_dynamic[muscle],4):<10} {round(muscle_len[muscle][comm_index],4):<10}\n")
+                sys.stdout.write(f"{muscle:<30} {round(muscle_len[muscle][comm_index],4):<10} {round(muscle_ten[muscle][comm_index],4):<10}\n")
  
     return
 
@@ -878,14 +950,9 @@ def run_sims(dt,
     joint_indices  = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_JOINT, name)    for name in  joint_list}
     muscle_indices = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_ACTUATOR, name) for name in  muscles_list}
 
-    print(joint_list)
-    print(muscles_list)
-
     # --- Raw Robot Data Structures ---
-    potentiometer_data      = {key: 0 for key in joint_list}
-    potentiometer_data_0    = {key: 0 for key in joint_list}
-    pressure_sensor_data    = {key: 0 for key in muscles_list}
-    pressure_sensor_data_0  = {key: 0 for key in muscles_list}
+    potentiometer_data      = {key: np.zeros(num_comms) for key in joint_list}
+    pressure_sensor_data    = {key: np.zeros(num_comms) for key in muscles_list}
 
     # --- Muscle Properties ---
     if muscle_mutt:
@@ -897,111 +964,169 @@ def run_sims(dt,
         muscle_origin           = {name: [0,0] for name in muscles_list}
         muscle_wrap             = {name: [0,0] for name in muscles_list}
         joint_offset            = {name: [0,0] for name in muscles_list}
-        muscle_insertion_rest_cart   = {name: [0,0] for name in muscles_list}
+        muscle_insertion   = {name: [0,0] for name in muscles_list}
         for muscle in muscles_list:
             if   'hip_joint_ext_muscle' in muscle:        
                 muscle_origin[muscle]               = [-0.083,  0.037]
                 muscle_wrap[muscle]                 = [-0.508, -0.00]
                 joint_offset[muscle]                = [-0.508, -0.025]
-                muscle_insertion_rest_cart[muscle]  = [-0.0201,  0.0001]
+                muscle_insertion[muscle]            = [-0.0201,  0.0001+joint_offset[muscle][1]]
             elif 'hip_joint_flx_muscle' in muscle:        
                 muscle_origin[muscle]               = [-0.083,  0.015]
                 muscle_wrap[muscle]                 = [-0.508, -0.0451]
                 joint_offset[muscle]                = [-0.508, -0.025]
-                muscle_insertion_rest_cart[muscle]  = [-0.0201, -0.0001]
+                muscle_insertion[muscle]            = [-0.0201, -0.0001+joint_offset[muscle][1]]
             elif 'knee_joint_ext_muscle' in muscle:       
                 muscle_origin[muscle]               = [0.024,    0.0250]
                 muscle_wrap[muscle]                 = [0.0225,   -0.2025]
                 joint_offset[muscle]                = [0.000,   -0.2225]
-                muscle_insertion_rest_cart[muscle]  = [0.016,     0.007]
+                muscle_insertion[muscle]            = [0.016,     0.007+joint_offset[muscle][1]]
             elif 'knee_joint_flx_muscle' in muscle:       
                 muscle_origin[muscle]               = [-0.024,   0.0250]
                 muscle_wrap[muscle]                 = [-0.0225, -0.2025]
                 joint_offset[muscle]                = [ 0.000,  -0.2225]
-                muscle_insertion_rest_cart[muscle]  = [-0.015,  -0.013]
+                muscle_insertion[muscle]            = [-0.015,  -0.013+joint_offset[muscle][1]]
             elif 'ankle_joint_ext_muscle' in muscle:      
                 muscle_origin[muscle]               = [-0.025,  -0.034]
                 muscle_wrap[muscle]                 = [-0.0225, -0.20]
                 joint_offset[muscle]                = [0,       -0.22]
-                muscle_insertion_rest_cart[muscle]  = [0.0,      0.0100]
+                muscle_insertion[muscle]            = [0.0,      0.0100+joint_offset[muscle][1]]
             elif 'ankle_joint_flx_muscle' in muscle:      
                 muscle_origin[muscle]               = [0.020,   -0.006]
                 muscle_wrap[muscle]                 = [0.0225,  -0.20]
                 joint_offset[muscle]                = [0,       -0.22]
-                muscle_insertion_rest_cart[muscle]  = [0.0075,  -0.015]
+                muscle_insertion[muscle]            = [0.0075,  -0.015+joint_offset[muscle][1]]
             elif 'scapula_joint_ext_muscle' in muscle:    
                 muscle_origin[muscle]               = [-0.405,  0.045]
                 muscle_wrap[muscle]                 = [0,       0.1051]
                 joint_offset[muscle]                = [0,       0.085]
-                muscle_insertion_rest_cart[muscle]  = [0.0201,  0.0001]
+                muscle_insertion[muscle]            = [0.0201,  0.0001+joint_offset[muscle][1]]
             elif 'scapula_joint_flx_muscle' in muscle:    
                 muscle_origin[muscle]               = [-0.405,  0.023]
                 muscle_wrap[muscle]                 = [0,      0.065]
                 joint_offset[muscle]                = [0,      0.085]
-                muscle_insertion_rest_cart[muscle]  = [0.0201,-0.0001]
+                muscle_insertion[muscle]            = [0.0201,-0.0001+joint_offset[muscle][1]]
             elif 'shoulder_joint_ext_muscle' in muscle:   
                 muscle_origin[muscle]               = [0.024 ,  0.025]
                 muscle_wrap[muscle]                 = [0.0225, -0.15]
                 joint_offset[muscle]                = [0,      -0.17]
-                muscle_insertion_rest_cart[muscle]  = [0.022,   0.011]
+                muscle_insertion[muscle]            = [0.022,   0.011+joint_offset[muscle][1]]
             elif 'shoulder_joint_flx_muscle' in muscle:   
                 muscle_origin[muscle]               = [-0.024,  0.025]
                 muscle_wrap[muscle]                 = [-0.0225,-0.15]
                 joint_offset[muscle]                = [0,      -0.17]
-                muscle_insertion_rest_cart[muscle]  = [-0.011, -0.015]
+                muscle_insertion[muscle]            = [-0.011, -0.015+joint_offset[muscle][1]]
             elif 'wrist_joint_ext_muscle' in muscle:      
                 muscle_origin[muscle]               = [-0.023, 0.016]
                 muscle_wrap[muscle]                 = [-0.023, 0.016] # TODO: Update this! Currently no wrapping point in MuJoCo model
                 joint_offset[muscle]                = [0,     -0.2125]
-                muscle_insertion_rest_cart[muscle]  = [-0.01,  0.02]
+                muscle_insertion[muscle]            = [-0.01,  0.02+joint_offset[muscle][1]]
             elif 'wrist_joint_flx_muscle' in muscle:      
                 muscle_origin[muscle]               = [0.023,  -0.023]
                 muscle_wrap[muscle]                 = [0.023,  -0.023] # TODO: Update this! Currently no wrapping point in MuJoCo model
                 joint_offset[muscle]                = [0,      -0.2125]
-                muscle_insertion_rest_cart[muscle]  = [0.0075, -0.015]
+                muscle_insertion[muscle]  = [0.0075, -0.015+joint_offset[muscle][1]]
 
-        muscle_insertion_rest_polar   = {name: [0,0] for name in muscles_list} # muscle insertion point in polar coordinates
-        muscle_insertion_dynamic_cart = {name: [0,0] for name in muscles_list} # muscle insertion point in polar coordinates
+            
+
+        muscle_insertion_rest_polar = {name: [0,0] for name in muscles_list} # muscle insertion point in polar coordinates
         muscle_length_static        = {name: 0.0 for name in muscles_list} # length of the static portion
         muscle_length_dynamic       = {name: 0.0 for name in muscles_list} # length of the static portion
+
         for muscle in muscles_list:
-            muscle_length_static[muscle] = 1000*(np.sqrt((muscle_origin[muscle][0]-muscle_wrap[muscle][0])**2+(muscle_origin[muscle][1]-muscle_wrap[muscle][1])**2)) # length of static portion of muscle
+            x_0 = muscle_origin[muscle][0]
+            x_1 = muscle_wrap[muscle][0]
+            x_2 = muscle_insertion[muscle][0]
+            y_0 = muscle_origin[muscle][1]
+            y_1 = muscle_wrap[muscle][1]
+            y_2 = muscle_insertion[muscle][1]
 
-            h        = np.sqrt(muscle_insertion_rest_cart[muscle][0]**2 + muscle_insertion_rest_cart[muscle][1]**2)
-            theta_r  = np.arctan2(muscle_insertion_rest_cart[muscle][0], muscle_insertion_rest_cart[muscle][1])
-            muscle_insertion_rest_polar[muscle] = (h, theta_r)
-        
-        # Muscle + tendon initial lengths, to be calculated analytically
-        muscle_L0 = {name: 0.0 for name in muscles_list}
-        for muscle in muscle_L0:
-            if   'hip_joint_flx_muscle' in muscle:        muscle_L0[muscle] = 0.0
-            elif 'hip_joint_ext_muscle' in muscle:        muscle_L0[muscle] = 0.0
-            elif 'knee_joint_flx_muscle' in muscle:       muscle_L0[muscle] = 0.0
-            elif 'knee_joint_ext_muscle' in muscle:       muscle_L0[muscle] = 0.0
-            elif 'ankle_joint_flx_muscle' in muscle:      muscle_L0[muscle] = 0.0
-            elif 'ankle_joint_ext_muscle' in muscle:      muscle_L0[muscle] = 0.0
-            elif 'scapula_joint_flx_muscle' in muscle:    muscle_L0[muscle] = 0.0
-            elif 'scapula_joint_ext_muscle' in muscle:    muscle_L0[muscle] = 0.0
-            elif 'shoulder_joint_flx_muscle' in muscle:   muscle_L0[muscle] = 0.0
-            elif 'shoulder_joint_ext_muscle' in muscle:   muscle_L0[muscle] = 0.0
-            elif 'wrist_joint_flx_muscle' in muscle:      muscle_L0[muscle] = 0.0
-            elif 'wrist_joint_ext_muscle' in muscle:      muscle_L0[muscle] = 0.0
+            muscle_length_static[muscle] = np.sqrt((x_0 - x_1)**2 + (y_0 - y_1)**2) + np.sqrt((x_1 - x_2)**2 + (y_1 - y_2)**2) # length of static portion of muscle
 
+            # r        = np.sqrt(muscle_insertion[muscle]          [0]**2 + muscle_insertion[muscle]          [1]**2)
+            # theta    = np.arctan2(muscle_insertion[muscle]          [1], muscle_insertion[muscle]          [0])
+
+            # # print(muscle,r,theta)
+
+            # muscle_insertion_rest_polar[muscle] = (r, theta)
+
+            # if any(j in muscle for j in ('wrist', 'ankle', 'knee', 'shoulder')):      
+            #     x_0 = r * np.cos(theta)
+            #     x_1 = muscle_wrap[muscle][0] - joint_offset[muscle][0]
+            #     y_0 = r * np.sin(theta)
+            #     y_1 = muscle_wrap[muscle][1] - joint_offset[muscle][1]
+            #     muscle_length_dynamic[muscle] = np.sqrt((x_0-x_1)**2+(y_0-y_1)**2) 
+            # elif any(j in muscle for j in ('hip', 'scapula')):
+            #     r  = 0.0365 / 2 # measured directly
+            #     theta = 0
+            #     if 'ext' in muscle:
+            #         muscle_length_dynamic[muscle] = r * theta
+            #     if 'flx' in muscle:
+            #         muscle_length_dynamic[muscle] = - r * theta
+            # print(muscle, muscle_length_static[muscle], muscle_length_dynamic[muscle], muscle_length_dynamic[muscle]+muscle_length_static[muscle])
+
+        # BPA resting lengths for tension calculation.
+        joint_radius = {name: 0.0 for name in muscles_list}
+        for muscle in muscles_list:
+            if   'hip_joint_flx_muscle' in muscle:        joint_radius[muscle] = 0.0365/2
+            elif 'hip_joint_ext_muscle' in muscle:        joint_radius[muscle] = 0.0365/2
+            elif 'knee_joint_flx_muscle' in muscle:       joint_radius[muscle] = 0.020
+            elif 'knee_joint_ext_muscle' in muscle:       joint_radius[muscle] = 0.019
+            elif 'ankle_joint_flx_muscle' in muscle:      joint_radius[muscle] = 0.018
+            elif 'ankle_joint_ext_muscle' in muscle:      joint_radius[muscle] = 0.020
+            elif 'scapula_joint_flx_muscle' in muscle:    joint_radius[muscle] = 0.0365/2
+            elif 'scapula_joint_ext_muscle' in muscle:    joint_radius[muscle] = 0.0365/2
+            elif 'shoulder_joint_flx_muscle' in muscle:   joint_radius[muscle] = 0.019
+            elif 'shoulder_joint_ext_muscle' in muscle:   joint_radius[muscle] = 0.024
+            elif 'wrist_joint_flx_muscle' in muscle:      joint_radius[muscle] = 0.017
+            elif 'wrist_joint_ext_muscle' in muscle:      joint_radius[muscle] = 0.021
+            
         # BPA resting lengths for tension calculation.
         BPA_L0 = {name: 0.0 for name in muscles_list}
         for muscle in muscles_list:
-            if   'hip_joint_flx_muscle' in muscle:        BPA_L0[muscle] = 0.0
-            elif 'hip_joint_ext_muscle' in muscle:        BPA_L0[muscle] = 0.0
-            elif 'knee_joint_flx_muscle' in muscle:       BPA_L0[muscle] = 0.0
-            elif 'knee_joint_ext_muscle' in muscle:       BPA_L0[muscle] = 0.0
-            elif 'ankle_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.0
-            elif 'ankle_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.0
-            elif 'scapula_joint_flx_muscle' in muscle:    BPA_L0[muscle] = 0.0
-            elif 'scapula_joint_ext_muscle' in muscle:    BPA_L0[muscle] = 0.0
-            elif 'shoulder_joint_flx_muscle' in muscle:   BPA_L0[muscle] = 0.0
-            elif 'shoulder_joint_ext_muscle' in muscle:   BPA_L0[muscle] = 0.0
-            elif 'wrist_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.0
-            elif 'wrist_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.0
+            if   'hip_joint_flx_muscle' in muscle:        BPA_L0[muscle] = 0.268
+            elif 'hip_joint_ext_muscle' in muscle:        BPA_L0[muscle] = 0.268
+            elif 'knee_joint_flx_muscle' in muscle:       BPA_L0[muscle] = 0.166
+            elif 'knee_joint_ext_muscle' in muscle:       BPA_L0[muscle] = 0.162
+            elif 'ankle_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.135
+            elif 'ankle_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.117
+            elif 'scapula_joint_flx_muscle' in muscle:    BPA_L0[muscle] = 0.268
+            elif 'scapula_joint_ext_muscle' in muscle:    BPA_L0[muscle] = 0.268
+            elif 'shoulder_joint_flx_muscle' in muscle:   BPA_L0[muscle] = 0.128
+            elif 'shoulder_joint_ext_muscle' in muscle:   BPA_L0[muscle] = 0.13
+            elif 'wrist_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.15
+            elif 'wrist_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.128
+        
+        # --- Motoneuron Properties ---
+        act_bandwidth = {name: 1.0 for name in muscles_list}
+        for muscle in muscles_list:
+            if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 30
+            elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 30
+            elif 'knee_joint_ext_muscle' in muscle:       act_bandwidth[muscle] = 10
+            elif 'knee_joint_flx_muscle' in muscle:       act_bandwidth[muscle] = 10
+            elif 'ankle_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
+            elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 5
+            elif 'scapula_joint_ext_muscle' in muscle:    act_bandwidth[muscle] = 10
+            elif 'scapula_joint_flx_muscle' in muscle:    act_bandwidth[muscle] = 10
+            elif 'shoulder_joint_ext_muscle' in muscle:   act_bandwidth[muscle] = 10
+            elif 'shoulder_joint_flx_muscle' in muscle:   act_bandwidth[muscle] = 10
+            elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
+            elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 5
+
+        act_mid = {name: -65 for name in muscles_list}
+        for muscle in muscles_list:
+            if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -85
+            elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -85
+            elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -65
+            elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -60
+            elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -60
+            elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -50
+            elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -68
+            elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -55
+            elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -67
+            elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -60
+            elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -60
+            elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -52
 
         # --- Teensy/Serial Initialization ---
         spike_port = serial.Serial(port=spike_port_name, baudrate=9600, timeout=0.1)
@@ -1013,42 +1138,17 @@ def run_sims(dt,
         sense_port.reset_input_buffer()  # Clear any existing data in the buffer
         sense_port.reset_output_buffer() # Clear any existing data in the buffer    
 
-        # Sensor calibration
-        spike_port.write(bytearray([99]))
-        clock.sleep(4)
+        # Potentiometer and pressure sensor calibration
         sense_port.write(bytearray([255]))
         for joint in potentiometer_data.keys():
             if 'L_' in joint:
-                potentiometer_data[joint]   = np.frombuffer(sense_port.read(1), dtype=np.uint8)
-                potentiometer_data_0[joint] = potentiometer_data[joint]
+                potentiometer_data[joint][0] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
             elif 'R_' in joint:
-                potentiometer_data[joint]   = - np.frombuffer(sense_port.read(1), dtype=np.uint8) # Potentiometer configuration creates signals of the opposite sign on the right and left sides.
-                potentiometer_data_0[joint] = potentiometer_data[joint]
+                potentiometer_data[joint][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8) # Potentiometer configuration creates signals of the opposite sign on the right and left sides.
         for muscle in pressure_sensor_data.keys():
-            pressure_sensor_data[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
-            pressure_sensor_data_0[muscle] = pressure_sensor_data[muscle]
+            pressure_sensor_data[muscle][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
         
-        # Initial joint/muscle value calculation
-        muscle_data(
-            pressure_sensor_data_0=pressure_sensor_data_0,
-            pressure_sensor_data=pressure_sensor_data,
-            potentiometer_data_0=potentiometer_data_0,
-            potentiometer_data=potentiometer_data,
-            joint_offset=joint_offset,
-            muscle_length_static=muscle_length_static,
-            muscle_length_dynamic=muscle_length_dynamic,
-            muscle_wrap=muscle_wrap,
-            muscle_insertion_rest_polar=muscle_insertion_rest_polar,
-            muscle_insertion_dynamic_cart=muscle_insertion_dynamic_cart,
-            joint_ang=joint_ang,
-            muscle_L0=muscle_L0,
-            BPA_L0=BPA_L0,
-            muscle_len=muscle_len,
-            muscle_vel=muscle_vel,
-            muscle_ten=muscle_ten,
-            comm_dt=comm_dt,
-            comm_index=comm_index)
-
+    
     else:
         pulse_data = np.zeros([len(t), num_spk_out])   # Simulated Teensy pulse data
         pulse_data[0] = np.zeros([num_spk_out])        # For comparison with physical platform
@@ -1058,43 +1158,19 @@ def run_sims(dt,
         muscle_vel = {key: np.zeros(num_steps) for key in muscles_list}
         muscle_ten = {key: np.zeros(num_steps) for key in muscles_list}
 
-        muscle_L0 = {key: 0 for key in  muscles_list}
         for joint in joint_ang.keys():
             joint_ang[joint][0] = mujoco_data.qpos[joint_indices[joint]]
         for muscle in muscle_len.keys():
             muscle_len[muscle][0] = mujoco_data.actuator_length[muscle_indices[muscle]]
-            muscle_L0[muscle] = muscle_len[muscle][0]
 
-    # --- Motoneuron Properties ---
-    mn_gains = {name: 1.0 for name in muscles_list}
-    for muscle in muscles_list:
-        if   'hip_joint_ext_muscle' in muscle:        mn_gains[muscle] = 0.97
-        elif 'hip_joint_flx_muscle' in muscle:        mn_gains[muscle] = 1.1
-        elif 'knee_joint_ext_muscle' in muscle:       mn_gains[muscle] = 1.1
-        elif 'knee_joint_flx_muscle' in muscle:       mn_gains[muscle] = 0.9
-        elif 'ankle_joint_ext_muscle' in muscle:      mn_gains[muscle] = 0.95
-        elif 'ankle_joint_flx_muscle' in muscle:      mn_gains[muscle] = 0.95
-        elif 'scapula_joint_ext_muscle' in muscle:    mn_gains[muscle] = 0.97
-        elif 'scapula_joint_flx_muscle' in muscle:    mn_gains[muscle] = 1.1
-        elif 'shoulder_joint_ext_muscle' in muscle:   mn_gains[muscle] = 1.1
-        elif 'shoulder_joint_flx_muscle' in muscle:   mn_gains[muscle] = 0.9
-        elif 'wrist_joint_ext_muscle' in muscle:      mn_gains[muscle] = 0.95
-        elif 'wrist_joint_flx_muscle' in muscle:      mn_gains[muscle] = 0.95
+        # --- Video Rendering ---
+        frames = []
+        framerate = 60
+        renderer = mujoco.Renderer(mujoco_sim, 920,1280)
+        plt.figure()
+        plt.imshow(sns_model.g_max_non)
 
-    act_lvl = {name: -65 for name in muscles_list}
-    for muscle in muscles_list:
-        if   'hip_joint_ext_muscle' in muscle:        act_lvl[muscle] = -70
-        elif 'hip_joint_flx_muscle' in muscle:        act_lvl[muscle] = -70
-        elif 'knee_joint_ext_muscle' in muscle:       act_lvl[muscle] = -70
-        elif 'knee_joint_flx_muscle' in muscle:       act_lvl[muscle] = -70
-        elif 'ankle_joint_ext_muscle' in muscle:      act_lvl[muscle] = -60
-        elif 'ankle_joint_flx_muscle' in muscle:      act_lvl[muscle] = -60
-        elif 'scapula_joint_ext_muscle' in muscle:    act_lvl[muscle] = -70
-        elif 'scapula_joint_flx_muscle' in muscle:    act_lvl[muscle] = -70
-        elif 'shoulder_joint_ext_muscle' in muscle:   act_lvl[muscle] = -70
-        elif 'shoulder_joint_flx_muscle' in muscle:   act_lvl[muscle] = -70
-        elif 'wrist_joint_ext_muscle' in muscle:      act_lvl[muscle] = -60
-        elif 'wrist_joint_flx_muscle' in muscle:      act_lvl[muscle] = -60
+
 
     mn_indices = {}
     for ind, name in enumerate(muscles_list):
@@ -1106,13 +1182,6 @@ def run_sims(dt,
             mn_indices[name] = ind + 6*2
         else:
             mn_indices[name] = ind + 6*3
-
-    # --- Video Rendering ---
-    frames = []
-    framerate = 60
-    renderer = mujoco.Renderer(mujoco_sim, 920,1280)
-    plt.figure()
-    plt.imshow(sns_model.g_max_non)
 
     # --- Loop Timing Variables ---
     time_print    = 0
@@ -1127,7 +1196,7 @@ def run_sims(dt,
     # --- Spike and Sensory Data Buffers ---
     spk_packet  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool)
 
-    # --- Serial Communication Handler ---
+    # --- Time Initialization ---
     t_mark          = clock.perf_counter()
     time_start      = clock.perf_counter()
     sys.stdout.write(f"\n\n\n\n")
@@ -1147,7 +1216,7 @@ def run_sims(dt,
 
         # --- Convert SNS output to spiking inputs ---
         for muscle in muscle_indices.keys():
-            spk_inputs[muscle_indices[muscle]] = non_to_spk(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_lvl[muscle])
+            spk_inputs[muscle_indices[muscle]] = non_to_spk(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_mid[muscle], bandwidth=act_bandwidth[muscle])
         sns_spk_data[i, :] = spk_model(x=spk_inputs)
         spikes_raw = np.array(sns_spk_data[i, :], dtype=bool)
         time_spk += clock.perf_counter() - time_mark
@@ -1160,7 +1229,8 @@ def run_sims(dt,
                 spk_packet = spk_packet | spikes_raw
 
             # At comm interval, send spikes and receive sensory data
-            if i * dt >= comm_index * comm_dt:                
+            if i * dt >= comm_index * comm_dt:               
+                spk_packet  = np.array([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], dtype=bool) 
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
                 # Wait for real time to match simulation
                 time_now = clock.perf_counter()
@@ -1178,26 +1248,21 @@ def run_sims(dt,
                 sense_port.write(bytearray([255]))
                 for joint in potentiometer_data.keys():
                     if 'L_' in joint:
-                        potentiometer_data[joint] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+                        potentiometer_data[joint][comm_index] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
                     elif 'R_' in joint:
-                        potentiometer_data[joint] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
+                        potentiometer_data[joint][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
                 for muscle in pressure_sensor_data.keys():
-                    pressure_sensor_data[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+                    pressure_sensor_data[muscle][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
 
                 #  joint/muscle value calculation
                 muscle_data(
-                    pressure_sensor_data_0=pressure_sensor_data_0,
                     pressure_sensor_data=pressure_sensor_data,
-                    potentiometer_data_0=potentiometer_data_0,
                     potentiometer_data=potentiometer_data,
-                    joint_offset=joint_offset,
                     muscle_length_static=muscle_length_static,
                     muscle_length_dynamic=muscle_length_dynamic,
-                    muscle_wrap=muscle_wrap,
                     muscle_insertion_rest_polar=muscle_insertion_rest_polar,
-                    muscle_insertion_dynamic_cart=muscle_insertion_dynamic_cart,
                     joint_ang=joint_ang,
-                    muscle_L0=muscle_L0,
+                    joint_radius=joint_radius,
                     BPA_L0=BPA_L0,
                     muscle_len=muscle_len,
                     muscle_vel=muscle_vel,
@@ -1205,16 +1270,11 @@ def run_sims(dt,
                     comm_dt=comm_dt,
                     comm_index=comm_index)
                 
+                comm_index += 1
+                
                 # Sync MuJoCo viewer (Verify that the simulation reads is reading sensor data correctly.)
 
                 # viewer.sync()
-                
-                # Print joint status to terminal
-                sys.stdout.write(f"\033[{len(joint_ang.keys())}A")
-                for joint in joint_ang.keys():
-                    sys.stdout.write("\033[K")
-                    sys.stdout.write(f"{joint:<18} = {joint_ang[joint][comm_index]}\n")
-                comm_index += 1
 
         time_spkqueue += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
@@ -1222,7 +1282,7 @@ def run_sims(dt,
         # --- Simulation Communication: MuJoCo ---
         if not muscle_mutt:
             for muscle in muscle_indices.keys():
-                mujoco_data.act[muscle_indices[muscle]] = stim_to_act(sns_sim_data[i-1, mn_indices[muscle]] * mn_gains[muscle])
+                mujoco_data.act[muscle_indices[muscle]] = stim_to_act(sns_sim_data[i-1, mn_indices[muscle]])
             for muscle in muscle_indices.keys():
                 if sns_spk_data[i, muscle_indices[muscle]] == 1:
                     pulse_data[i:i+int(10 - 1), muscle_indices[muscle]] = 1
@@ -1240,18 +1300,18 @@ def run_sims(dt,
         feedback_index = comm_index - 1 if muscle_mutt else i
 
         # --- Convert Muscle Data to SNS Inputs ---
-        L_hip_feedback = hip_inputs(muscle_len['L_hip_joint_ext_muscle'][feedback_index], muscle_len['L_hip_joint_flx_muscle'][feedback_index], muscle_vel['L_hip_joint_ext_muscle'][feedback_index], muscle_vel['L_hip_joint_flx_muscle'][feedback_index], muscle_ten['L_hip_joint_ext_muscle'][feedback_index], muscle_ten['L_hip_joint_flx_muscle'][feedback_index], muscle_L0['L_hip_joint_ext_muscle'], muscle_L0['L_hip_joint_flx_muscle'])
-        R_hip_feedback = hip_inputs(muscle_len['R_hip_joint_ext_muscle'][feedback_index], muscle_len['R_hip_joint_flx_muscle'][feedback_index], muscle_vel['R_hip_joint_ext_muscle'][feedback_index], muscle_vel['R_hip_joint_flx_muscle'][feedback_index], muscle_ten['R_hip_joint_ext_muscle'][feedback_index], muscle_ten['R_hip_joint_flx_muscle'][feedback_index], muscle_L0['R_hip_joint_ext_muscle'], muscle_L0['R_hip_joint_flx_muscle'])
-        L_knee_feedback = knee_inputs(muscle_len['L_knee_joint_ext_muscle'][feedback_index], muscle_len['L_knee_joint_flx_muscle'][feedback_index], muscle_vel['L_knee_joint_ext_muscle'][feedback_index], muscle_vel['L_knee_joint_flx_muscle'][feedback_index], muscle_ten['L_knee_joint_ext_muscle'][feedback_index], muscle_ten['L_knee_joint_flx_muscle'][feedback_index], muscle_L0['L_knee_joint_ext_muscle'], muscle_L0['L_knee_joint_flx_muscle'])
-        R_knee_feedback = knee_inputs(muscle_len['R_knee_joint_ext_muscle'][feedback_index], muscle_len['R_knee_joint_flx_muscle'][feedback_index], muscle_vel['R_knee_joint_ext_muscle'][feedback_index], muscle_vel['R_knee_joint_flx_muscle'][feedback_index], muscle_ten['R_knee_joint_ext_muscle'][feedback_index], muscle_ten['R_knee_joint_flx_muscle'][feedback_index], muscle_L0['R_knee_joint_ext_muscle'], muscle_L0['R_knee_joint_flx_muscle'])
-        L_ankle_feedback = ankle_inputs(muscle_len['L_ankle_joint_ext_muscle'][feedback_index], muscle_len['L_ankle_joint_flx_muscle'][feedback_index], muscle_vel['L_ankle_joint_ext_muscle'][feedback_index], muscle_vel['L_ankle_joint_flx_muscle'][feedback_index], muscle_ten['L_ankle_joint_ext_muscle'][feedback_index], muscle_ten['L_ankle_joint_flx_muscle'][feedback_index], muscle_L0['L_ankle_joint_ext_muscle'], muscle_L0['L_ankle_joint_flx_muscle'])
-        R_ankle_feedback = ankle_inputs(muscle_len['R_ankle_joint_ext_muscle'][feedback_index], muscle_len['R_ankle_joint_flx_muscle'][feedback_index], muscle_vel['R_ankle_joint_ext_muscle'][feedback_index], muscle_vel['R_ankle_joint_flx_muscle'][feedback_index], muscle_ten['R_ankle_joint_ext_muscle'][feedback_index], muscle_ten['R_ankle_joint_flx_muscle'][feedback_index], muscle_L0['R_ankle_joint_ext_muscle'], muscle_L0['R_ankle_joint_flx_muscle'])
-        L_scapula_feedback = scapula_inputs(muscle_len['L_scapula_joint_ext_muscle'][feedback_index], muscle_len['L_scapula_joint_flx_muscle'][feedback_index], muscle_vel['L_scapula_joint_ext_muscle'][feedback_index], muscle_vel['L_scapula_joint_flx_muscle'][feedback_index], muscle_ten['L_scapula_joint_ext_muscle'][feedback_index], muscle_ten['L_scapula_joint_flx_muscle'][feedback_index], muscle_L0['L_scapula_joint_ext_muscle'], muscle_L0['L_scapula_joint_flx_muscle'])
-        R_scapula_feedback = scapula_inputs(muscle_len['R_scapula_joint_ext_muscle'][feedback_index], muscle_len['R_scapula_joint_flx_muscle'][feedback_index], muscle_vel['R_scapula_joint_ext_muscle'][feedback_index], muscle_vel['R_scapula_joint_flx_muscle'][feedback_index], muscle_ten['R_scapula_joint_ext_muscle'][feedback_index], muscle_ten['R_scapula_joint_flx_muscle'][feedback_index], muscle_L0['R_scapula_joint_ext_muscle'], muscle_L0['R_scapula_joint_flx_muscle'])
-        L_shoulder_feedback = shoulder_inputs(muscle_len['L_shoulder_joint_ext_muscle'][feedback_index], muscle_len['L_shoulder_joint_flx_muscle'][feedback_index], muscle_vel['L_shoulder_joint_ext_muscle'][feedback_index], muscle_vel['L_shoulder_joint_flx_muscle'][feedback_index], muscle_ten['L_shoulder_joint_ext_muscle'][feedback_index], muscle_ten['L_shoulder_joint_flx_muscle'][feedback_index], muscle_L0['L_shoulder_joint_ext_muscle'], muscle_L0['L_shoulder_joint_flx_muscle'])
-        R_shoulder_feedback = shoulder_inputs(muscle_len['R_shoulder_joint_ext_muscle'][feedback_index], muscle_len['R_shoulder_joint_flx_muscle'][feedback_index], muscle_vel['R_shoulder_joint_ext_muscle'][feedback_index], muscle_vel['R_shoulder_joint_flx_muscle'][feedback_index], muscle_ten['R_shoulder_joint_ext_muscle'][feedback_index], muscle_ten['R_shoulder_joint_flx_muscle'][feedback_index], muscle_L0['R_shoulder_joint_ext_muscle'], muscle_L0['R_shoulder_joint_flx_muscle'])
-        L_wrist_feedback = wrist_inputs(muscle_len['L_wrist_joint_ext_muscle'][feedback_index], muscle_len['L_wrist_joint_flx_muscle'][feedback_index], muscle_vel['L_wrist_joint_ext_muscle'][feedback_index], muscle_vel['L_wrist_joint_flx_muscle'][feedback_index], muscle_ten['L_wrist_joint_ext_muscle'][feedback_index], muscle_ten['L_wrist_joint_flx_muscle'][feedback_index], muscle_L0['L_wrist_joint_ext_muscle'], muscle_L0['L_wrist_joint_flx_muscle'])
-        R_wrist_feedback = wrist_inputs(muscle_len['R_wrist_joint_ext_muscle'][feedback_index], muscle_len['R_wrist_joint_flx_muscle'][feedback_index], muscle_vel['R_wrist_joint_ext_muscle'][feedback_index], muscle_vel['R_wrist_joint_flx_muscle'][feedback_index], muscle_ten['R_wrist_joint_ext_muscle'][feedback_index], muscle_ten['R_wrist_joint_flx_muscle'][feedback_index], muscle_L0['R_wrist_joint_ext_muscle'], muscle_L0['R_wrist_joint_flx_muscle'])
+        L_hip_feedback = hip_inputs(muscle_len['L_hip_joint_ext_muscle'][feedback_index], muscle_len['L_hip_joint_flx_muscle'][feedback_index], muscle_vel['L_hip_joint_ext_muscle'][feedback_index], muscle_vel['L_hip_joint_flx_muscle'][feedback_index], muscle_ten['L_hip_joint_ext_muscle'][feedback_index], muscle_ten['L_hip_joint_flx_muscle'][feedback_index], muscle_len['L_hip_joint_ext_muscle'][0], muscle_len['L_hip_joint_flx_muscle'][0])
+        R_hip_feedback = hip_inputs(muscle_len['R_hip_joint_ext_muscle'][feedback_index], muscle_len['R_hip_joint_flx_muscle'][feedback_index], muscle_vel['R_hip_joint_ext_muscle'][feedback_index], muscle_vel['R_hip_joint_flx_muscle'][feedback_index], muscle_ten['R_hip_joint_ext_muscle'][feedback_index], muscle_ten['R_hip_joint_flx_muscle'][feedback_index], muscle_len['R_hip_joint_ext_muscle'][0], muscle_len['R_hip_joint_flx_muscle'][0])
+        L_knee_feedback = knee_inputs(muscle_len['L_knee_joint_ext_muscle'][feedback_index], muscle_len['L_knee_joint_flx_muscle'][feedback_index], muscle_vel['L_knee_joint_ext_muscle'][feedback_index], muscle_vel['L_knee_joint_flx_muscle'][feedback_index], muscle_ten['L_knee_joint_ext_muscle'][feedback_index], muscle_ten['L_knee_joint_flx_muscle'][feedback_index], muscle_len['L_knee_joint_ext_muscle'][0], muscle_len['L_knee_joint_flx_muscle'][0])
+        R_knee_feedback = knee_inputs(muscle_len['R_knee_joint_ext_muscle'][feedback_index], muscle_len['R_knee_joint_flx_muscle'][feedback_index], muscle_vel['R_knee_joint_ext_muscle'][feedback_index], muscle_vel['R_knee_joint_flx_muscle'][feedback_index], muscle_ten['R_knee_joint_ext_muscle'][feedback_index], muscle_ten['R_knee_joint_flx_muscle'][feedback_index], muscle_len['R_knee_joint_ext_muscle'][0], muscle_len['R_knee_joint_flx_muscle'][0])
+        L_ankle_feedback = ankle_inputs(muscle_len['L_ankle_joint_ext_muscle'][feedback_index], muscle_len['L_ankle_joint_flx_muscle'][feedback_index], muscle_vel['L_ankle_joint_ext_muscle'][feedback_index], muscle_vel['L_ankle_joint_flx_muscle'][feedback_index], muscle_ten['L_ankle_joint_ext_muscle'][feedback_index], muscle_ten['L_ankle_joint_flx_muscle'][feedback_index], muscle_len['L_ankle_joint_ext_muscle'][0], muscle_len['L_ankle_joint_flx_muscle'][0])
+        R_ankle_feedback = ankle_inputs(muscle_len['R_ankle_joint_ext_muscle'][feedback_index], muscle_len['R_ankle_joint_flx_muscle'][feedback_index], muscle_vel['R_ankle_joint_ext_muscle'][feedback_index], muscle_vel['R_ankle_joint_flx_muscle'][feedback_index], muscle_ten['R_ankle_joint_ext_muscle'][feedback_index], muscle_ten['R_ankle_joint_flx_muscle'][feedback_index], muscle_len['R_ankle_joint_ext_muscle'][0], muscle_len['R_ankle_joint_flx_muscle'][0])
+        L_scapula_feedback = scapula_inputs(muscle_len['L_scapula_joint_ext_muscle'][feedback_index], muscle_len['L_scapula_joint_flx_muscle'][feedback_index], muscle_vel['L_scapula_joint_ext_muscle'][feedback_index], muscle_vel['L_scapula_joint_flx_muscle'][feedback_index], muscle_ten['L_scapula_joint_ext_muscle'][feedback_index], muscle_ten['L_scapula_joint_flx_muscle'][feedback_index], muscle_len['L_scapula_joint_ext_muscle'][0], muscle_len['L_scapula_joint_flx_muscle'][0])
+        R_scapula_feedback = scapula_inputs(muscle_len['R_scapula_joint_ext_muscle'][feedback_index], muscle_len['R_scapula_joint_flx_muscle'][feedback_index], muscle_vel['R_scapula_joint_ext_muscle'][feedback_index], muscle_vel['R_scapula_joint_flx_muscle'][feedback_index], muscle_ten['R_scapula_joint_ext_muscle'][feedback_index], muscle_ten['R_scapula_joint_flx_muscle'][feedback_index], muscle_len['R_scapula_joint_ext_muscle'][0], muscle_len['R_scapula_joint_flx_muscle'][0])
+        L_shoulder_feedback = shoulder_inputs(muscle_len['L_shoulder_joint_ext_muscle'][feedback_index], muscle_len['L_shoulder_joint_flx_muscle'][feedback_index], muscle_vel['L_shoulder_joint_ext_muscle'][feedback_index], muscle_vel['L_shoulder_joint_flx_muscle'][feedback_index], muscle_ten['L_shoulder_joint_ext_muscle'][feedback_index], muscle_ten['L_shoulder_joint_flx_muscle'][feedback_index], muscle_len['L_shoulder_joint_ext_muscle'][0], muscle_len['L_shoulder_joint_flx_muscle'][0])
+        R_shoulder_feedback = shoulder_inputs(muscle_len['R_shoulder_joint_ext_muscle'][feedback_index], muscle_len['R_shoulder_joint_flx_muscle'][feedback_index], muscle_vel['R_shoulder_joint_ext_muscle'][feedback_index], muscle_vel['R_shoulder_joint_flx_muscle'][feedback_index], muscle_ten['R_shoulder_joint_ext_muscle'][feedback_index], muscle_ten['R_shoulder_joint_flx_muscle'][feedback_index], muscle_len['R_shoulder_joint_ext_muscle'][0], muscle_len['R_shoulder_joint_flx_muscle'][0])
+        L_wrist_feedback = wrist_inputs(muscle_len['L_wrist_joint_ext_muscle'][feedback_index], muscle_len['L_wrist_joint_flx_muscle'][feedback_index], muscle_vel['L_wrist_joint_ext_muscle'][feedback_index], muscle_vel['L_wrist_joint_flx_muscle'][feedback_index], muscle_ten['L_wrist_joint_ext_muscle'][feedback_index], muscle_ten['L_wrist_joint_flx_muscle'][feedback_index], muscle_len['L_wrist_joint_ext_muscle'][0], muscle_len['L_wrist_joint_flx_muscle'][0])
+        R_wrist_feedback = wrist_inputs(muscle_len['R_wrist_joint_ext_muscle'][feedback_index], muscle_len['R_wrist_joint_flx_muscle'][feedback_index], muscle_vel['R_wrist_joint_ext_muscle'][feedback_index], muscle_vel['R_wrist_joint_flx_muscle'][feedback_index], muscle_ten['R_wrist_joint_ext_muscle'][feedback_index], muscle_ten['R_wrist_joint_flx_muscle'][feedback_index], muscle_len['R_wrist_joint_ext_muscle'][0], muscle_len['R_wrist_joint_flx_muscle'][0])
         time_mujo += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
         # --- Concatenate all feedback for SNS input ---
@@ -1287,7 +1347,7 @@ def run_sims(dt,
     plot_sns(t, sns_sim_data.T)
     # plot_spk(t, sns_spk_data.T)
     # Use combined per-leg master plot (angle, length, velocity)
-    plot_legs_master_summary(np.arange(len(next(iter(joint_ang.values())))), joint_ang, muscle_len, muscle_vel)
+    plot_legs_master_summary(np.arange(comm_index), joint_ang, muscle_len, muscle_vel, muscle_ten)
     
     times = [time_print, time_sns, time_spk, time_spkqueue, time_mujo, time_feed, time_vid, time_loop]
     plot_times(times)
@@ -1328,7 +1388,7 @@ def main():
     dat_thread: handles data receiving and sending between the simulation and Teensy
     """
 
-    feed_fwd    = True
+    feed_fwd    = False
     muscle_mutt = True
     make_vid    = False
 
@@ -1336,7 +1396,7 @@ def main():
     sense_port_name = "/dev/cu.usbmodem164372401" # port from Teensy which obtains sense data
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
 
-    cpg_gsyn = 1.7  # defines RG oscillation speed (small adjustments make a big difference!)
+    cpg_gsyn = 1.4  # defines RG oscillation speed (small adjustments make a big difference!)
     end_time = 10    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit

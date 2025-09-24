@@ -106,7 +106,7 @@ def build_hindlimbs(cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     Eh = -60
     delEm = Em
     delEh = Eh
-    tauHmax = 350
+    tauHmax = 500
     Gna = 1.5
     # reformat for sns-toolbox
     g_ion = [Gna]
@@ -286,7 +286,7 @@ def build_forelimbs(cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
     Eh = -60
     delEm = Em
     delEh = Eh
-    tauHmax = 350
+    tauHmax = 500
     Gna = 1.5
     # reformat for sns-toolbox
     g_ion = [Gna]
@@ -465,7 +465,7 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
     Eh = -60
     delEm = Em
     delEh = Eh
-    tauHmax = 350
+    tauHmax = 500
     Gna = 1.5
     # reformat for sns-toolbox
     # reformat for sns-toolbox

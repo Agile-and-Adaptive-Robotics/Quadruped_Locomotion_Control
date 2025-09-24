@@ -29,8 +29,8 @@ int pin_valve_hipREX      = 10;
 int pin_valve_hipRFL      = 24;
 int pin_valve_kneeREX     = 27;
 int pin_valve_kneeRFL     = 28;
-int pin_valve_ankleREX    = 29;
-int pin_valve_ankleRFL    = 30;
+int pin_valve_ankleREX    = 30;
+int pin_valve_ankleRFL    = 29;
 
 int pin_valve_hipLEX      = 4;
 int pin_valve_hipLFL      = 5;
@@ -149,6 +149,20 @@ void setup() {
   wristRFL.SetPulseFrequency(100);
   wristLEX.SetPulseFrequency(100);
   wristLFL.SetPulseFrequency(100);
+
+  hipLEX.ShouldPulseStart();
+  hipLFL.ShouldPulseStart();
+  hipREX.ShouldPulseStart();
+  hipRFL.ShouldPulseStart();
+  kneeREX.ShouldPulseStart();
+  ankleREX.ShouldPulseStart();
+  kneeLEX.ShouldPulseStart();
+  ankleLEX.ShouldPulseStart();
+  shoulderREX.ShouldPulseStart();
+  wristREX.ShouldPulseStart();
+  shoulderLEX.ShouldPulseStart();
+  wristLEX.ShouldPulseStart();
+  delay(5000);
   
 }
 
