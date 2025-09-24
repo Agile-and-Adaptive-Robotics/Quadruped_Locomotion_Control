@@ -1100,33 +1100,33 @@ def run_sims(dt,
         # --- Motoneuron Properties ---
         act_bandwidth = {name: 1.0 for name in muscles_list}
         for muscle in muscles_list:
-            if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 30
-            elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 30
+            if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 10
+            elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 10
             elif 'knee_joint_ext_muscle' in muscle:       act_bandwidth[muscle] = 10
             elif 'knee_joint_flx_muscle' in muscle:       act_bandwidth[muscle] = 10
             elif 'ankle_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 5
+            elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
             elif 'scapula_joint_ext_muscle' in muscle:    act_bandwidth[muscle] = 10
             elif 'scapula_joint_flx_muscle' in muscle:    act_bandwidth[muscle] = 10
             elif 'shoulder_joint_ext_muscle' in muscle:   act_bandwidth[muscle] = 10
             elif 'shoulder_joint_flx_muscle' in muscle:   act_bandwidth[muscle] = 10
             elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 5
+            elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
 
         act_mid = {name: -65 for name in muscles_list}
         for muscle in muscles_list:
-            if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -85
-            elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -85
-            elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -65
-            elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -60
-            elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -60
-            elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -50
-            elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -68
-            elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -55
-            elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -67
-            elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -60
-            elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -60
-            elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -52
+            if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -95
+            elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -95
+            elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -95
+            elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -95
+            elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
+            elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
+            elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -95
+            elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -95
+            elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -95
+            elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -95
+            elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
+            elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
 
         # --- Teensy/Serial Initialization ---
         spike_port = serial.Serial(port=spike_port_name, baudrate=9600, timeout=0.1)
@@ -1230,7 +1230,11 @@ def run_sims(dt,
 
             # At comm interval, send spikes and receive sensory data
             if i * dt >= comm_index * comm_dt:               
-                spk_packet  = np.array([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], dtype=bool) 
+                # spk_packet  = np.array([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], dtype=bool) 
+                # spk_packet  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) 
+                # spk_packet  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) 
+                # spk_packet  = np.array([0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1], dtype=bool) 
+                # spk_packet  = np.array([1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0], dtype=bool) 
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
                 # Wait for real time to match simulation
                 time_now = clock.perf_counter()
@@ -1397,7 +1401,7 @@ def main():
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
 
     cpg_gsyn = 1.4  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 10    # simulation end seconds
+    end_time = 30    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 60

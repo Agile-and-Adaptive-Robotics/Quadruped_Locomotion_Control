@@ -43,15 +43,15 @@ int pin_valve_scapulaREX  = 25;
 int pin_valve_scapulaRFL  = 26;
 int pin_valve_shoulderREX = 8;
 int pin_valve_shoulderRFL = 9;
-int pin_valve_wristREX    = 1;
-int pin_valve_wristRFL    = 0;
+int pin_valve_wristREX    = 7;
+int pin_valve_wristRFL    = 6;
 
 int pin_valve_scapulaLEX  = 31;
 int pin_valve_scapulaLFL  = 32;
 int pin_valve_shoulderLEX = 2;
 int pin_valve_shoulderLFL = 3;
-int pin_valve_wristLEX    = 7;
-int pin_valve_wristLFL    = 6;
+int pin_valve_wristLEX    = 1;
+int pin_valve_wristLFL    = 0;
 
 
 // // Define the force sensor pins for each muscle object. Specific to the AARL QTB.
@@ -176,22 +176,22 @@ void loop() {
         buffer_index++;
     } 
 
-    else if (buffer_index == 0 && raw_data == 99) {
-        hipLEX.ShouldPulseStart();
-        hipLFL.ShouldPulseStart();
-        hipREX.ShouldPulseStart();
-        hipRFL.ShouldPulseStart();
-        kneeREX.ShouldPulseStart();
-        ankleREX.ShouldPulseStart();
-        kneeLEX.ShouldPulseStart();
-        ankleLEX.ShouldPulseStart();
-        shoulderREX.ShouldPulseStart();
-        wristREX.ShouldPulseStart();
-        shoulderLEX.ShouldPulseStart();
-        wristLEX.ShouldPulseStart();
+    // else if (buffer_index == 0 && raw_data == 99) {
+    //     hipLEX.ShouldPulseStart();
+    //     hipLFL.ShouldPulseStart();
+    //     hipREX.ShouldPulseStart();
+    //     hipRFL.ShouldPulseStart();
+    //     kneeREX.ShouldPulseStart();
+    //     ankleREX.ShouldPulseStart();
+    //     kneeLEX.ShouldPulseStart();
+    //     ankleLEX.ShouldPulseStart();
+    //     shoulderREX.ShouldPulseStart();
+    //     wristREX.ShouldPulseStart();
+    //     shoulderLEX.ShouldPulseStart();
+    //     wristLEX.ShouldPulseStart();
 
-        delay(5000);
-    } 
+    //     delay(5000);
+    // } 
 
     else if (buffer_index != 0) {
         buffer[buffer_index] = raw_data;
@@ -229,7 +229,6 @@ void loop() {
       Serial.write(buffer, packet_size);
     }
   }
-
   // End pulses as needed
   hipREX.ShouldPulseEnd();
   hipRFL.ShouldPulseEnd();
