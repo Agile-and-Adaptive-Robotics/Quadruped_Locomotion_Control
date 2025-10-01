@@ -3,7 +3,7 @@
  *  https://www.instructables.com/Arduino-Interfacing-With-CD74HC4067-16-channel-MUX/
  */
 
-#include <CD74HC4067.h> // multiplexer library.
+#include "CD74HC4067.h" // multiplexer library.
 
 const int num_potentiometer = 12;       // how many potentiometers are there?
 const int num_press_sensor = 24;        // and how many pressure sensors?

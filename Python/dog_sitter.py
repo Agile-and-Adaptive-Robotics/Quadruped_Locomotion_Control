@@ -27,9 +27,10 @@ import matplotlib.pyplot as plt
 import scipy.signal
 from scipy.signal import find_peaks
 import serial
-import threading
 from queue import Queue
 from sns_network_model import build_net, spike_net
+
+import modern_robotics as mr
 
 
 # =============================
@@ -743,6 +744,9 @@ def muscle_data(
             potentiometer_data,
             muscle_length_static,
             muscle_length_dynamic,
+            muscle_wrap,
+            M,
+            Slist,
             muscle_insertion_rest_polar,
             joint_ang,
             joint_radius,
@@ -768,54 +772,19 @@ def muscle_data(
     for muscle in muscle_len.keys():
         for joint in joint_ang.keys():
             if joint in muscle:
-                if any(j in muscle for j in ('wrist', 'ankle')):
-                    r  = joint_radius[muscle] # measured directly
+                if any(j in muscle for j in ('wrist', 'ankle', 'knee', 'shoulder')):
 
-                    if 'ext' in muscle:
-                        theta_0 = - joint_ang[joint][comm_index]
-                    else:
-                        theta_0 = joint_ang[joint][comm_index]
-                        
-                    muscle_length_dynamic[muscle] = r * theta_0
+                    x_0 = muscle_wrap[muscle][0] #+ joint_offset[muscle][0]
+                    y_0 = muscle_wrap[muscle][1] #+ joint_offset[muscle][1]
+
+                    T= mr.FKinSpace(M[muscle], Slist[muscle], [joint_ang[joint][comm_index]])
+                    x_1 = T[0,3]
+                    y_1 = T[1,3]
+
+                    muscle_length_dynamic[muscle] = np.sqrt((x_0 - x_1)**2 + (y_0 - y_1)**2)
+
                     muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
 
-                    # r = muscle_insertion_rest_polar[muscle][0]
-                    # if 'ext' in muscle:
-                    #     theta_0 = - joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
-                    # else: 
-                    #     theta_0 = - joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
-
-                    # x_0 = r * np.cos(theta_0)
-                    # x_1 = r * np.sin(theta_0)
-                    # y_0 = muscle_wrap[muscle][0] #+ joint_offset[muscle][0]
-                    # y_1 = muscle_wrap[muscle][1] #+ joint_offset[muscle][1]
-
-                    # muscle_length_dynamic[muscle] = np.sqrt((x_0-x_1)**2+(y_0-y_1)**2) 
-                    # muscle_len[muscle][comm_index] = muscle_length_dynamic[muscle] # + muscle_length_static[muscle] # m/s
-                elif any(j in muscle for j in ('knee', 'shoulder')):
-                    r  = joint_radius[muscle] # measured directly
-
-                    if 'ext' in muscle:
-                        theta_0 = joint_ang[joint][comm_index]
-                    else:
-                        theta_0 = - joint_ang[joint][comm_index]
-                        
-                    muscle_length_dynamic[muscle] = r * theta_0
-                    muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
-
-                    # r = muscle_insertion_rest_polar[muscle][0]
-                    # if 'ext' in muscle:
-                    #     theta_0 = joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
-                    # else: 
-                    #     theta_0 = joint_ang[joint][comm_index] + muscle_insertion_rest_polar[muscle][1]
-
-                    # x_0 = r * np.cos(theta_0) 
-                    # y_0 = r * np.sin(theta_0) 
-                    # x_1 = muscle_wrap[muscle][0] - joint_offset[muscle][0]
-                    # y_1 = muscle_wrap[muscle][1] - joint_offset[muscle][1]
-
-                    # muscle_length_dynamic[muscle] = np.sqrt((x_0-x_1)**2+(y_0-y_1)**2) 
-                    # muscle_len[muscle][comm_index] =  muscle_length_dynamic[muscle] # + muscle_length_static[muscle] # m/s
                 elif any(j in muscle for j in ('hip', 'scapula')):
                     r  = joint_radius[muscle] # measured directly
 
@@ -881,7 +850,8 @@ def run_sims(dt,
              muscle_mutt=False,
              make_vid=True,
              spike_port_name='name_goes_here',
-             sense_port_name='name_goes_here'):
+             sense_port_name='name_goes_here',
+             data_location=False):
     """
     Runs a simulation integrating a neural network model (SNS toolbox) with a Mujoco physics engine model.
 
@@ -1027,7 +997,28 @@ def run_sims(dt,
                 joint_offset[muscle]                = [0,      -0.2125]
                 muscle_insertion[muscle]  = [0.0075, -0.015+joint_offset[muscle][1]]
 
-            
+        M     = {name: np.array([[0,0,0,0],
+                                [0,0,0,0],
+                                [0,0,0,0],
+                                [0,0,0,0]]) for name in muscles_list}
+        Slist = {name: np.array([[0],
+                                 [0],
+                                 [1],
+                                 [0],
+                                 [0],
+                                 [0]]) for name in muscles_list}
+        for muscle in muscles_list:
+                M[muscle] = np.array([[1,0,0,muscle_insertion[muscle][0]],
+                                      [0,1,0,muscle_insertion[muscle][1]],
+                                      [0,0,1,0],
+                                      [0,0,0,1]])
+                Slist[muscle] = np.array([[0],
+                                           [0],
+                                           [1],
+                                           [joint_offset[muscle][1]],
+                                           [0],
+                                           [0]])
+
 
         muscle_insertion_rest_polar = {name: [0,0] for name in muscles_list} # muscle insertion point in polar coordinates
         muscle_length_static        = {name: 0.0 for name in muscles_list} # length of the static portion
@@ -1041,29 +1032,7 @@ def run_sims(dt,
             y_1 = muscle_wrap[muscle][1]
             y_2 = muscle_insertion[muscle][1]
 
-            muscle_length_static[muscle] = np.sqrt((x_0 - x_1)**2 + (y_0 - y_1)**2) + np.sqrt((x_1 - x_2)**2 + (y_1 - y_2)**2) # length of static portion of muscle
-
-            # r        = np.sqrt(muscle_insertion[muscle]          [0]**2 + muscle_insertion[muscle]          [1]**2)
-            # theta    = np.arctan2(muscle_insertion[muscle]          [1], muscle_insertion[muscle]          [0])
-
-            # # print(muscle,r,theta)
-
-            # muscle_insertion_rest_polar[muscle] = (r, theta)
-
-            # if any(j in muscle for j in ('wrist', 'ankle', 'knee', 'shoulder')):      
-            #     x_0 = r * np.cos(theta)
-            #     x_1 = muscle_wrap[muscle][0] - joint_offset[muscle][0]
-            #     y_0 = r * np.sin(theta)
-            #     y_1 = muscle_wrap[muscle][1] - joint_offset[muscle][1]
-            #     muscle_length_dynamic[muscle] = np.sqrt((x_0-x_1)**2+(y_0-y_1)**2) 
-            # elif any(j in muscle for j in ('hip', 'scapula')):
-            #     r  = 0.0365 / 2 # measured directly
-            #     theta = 0
-            #     if 'ext' in muscle:
-            #         muscle_length_dynamic[muscle] = r * theta
-            #     if 'flx' in muscle:
-            #         muscle_length_dynamic[muscle] = - r * theta
-            # print(muscle, muscle_length_static[muscle], muscle_length_dynamic[muscle], muscle_length_dynamic[muscle]+muscle_length_static[muscle])
+            muscle_length_static[muscle] = np.sqrt((x_0 - x_1)**2 + (y_0 - y_1)**2) # + np.sqrt((x_1 - x_2)**2 + (y_1 - y_2)**2) # length of static portion of muscle
 
         # BPA resting lengths for tension calculation.
         joint_radius = {name: 0.0 for name in muscles_list}
@@ -1134,7 +1103,7 @@ def run_sims(dt,
         print("... Teensy Connection Established")
 
         spike_port.reset_input_buffer()  # Clear any existing data in the buffer
-        spike_port.reset_output_buffer() # Clear any existing data in the buffer
+        spike_port.reset_output_buffer() # Clear any existing data in the buffers
         sense_port.reset_input_buffer()  # Clear any existing data in the buffer
         sense_port.reset_output_buffer() # Clear any existing data in the buffer    
 
@@ -1230,11 +1199,9 @@ def run_sims(dt,
 
             # At comm interval, send spikes and receive sensory data
             if i * dt >= comm_index * comm_dt:               
-                # spk_packet  = np.array([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1], dtype=bool) 
-                # spk_packet  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) 
-                # spk_packet  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) 
-                # spk_packet  = np.array([0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1], dtype=bool) 
-                # spk_packet  = np.array([1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0], dtype=bool) 
+                limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
+                # limbs  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
+                spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
                 # Wait for real time to match simulation
                 time_now = clock.perf_counter()
@@ -1264,7 +1231,10 @@ def run_sims(dt,
                     potentiometer_data=potentiometer_data,
                     muscle_length_static=muscle_length_static,
                     muscle_length_dynamic=muscle_length_dynamic,
+                    muscle_wrap=muscle_wrap,
                     muscle_insertion_rest_polar=muscle_insertion_rest_polar,
+                    M=M,
+                    Slist=Slist,
                     joint_ang=joint_ang,
                     joint_radius=joint_radius,
                     BPA_L0=BPA_L0,
@@ -1344,14 +1314,25 @@ def run_sims(dt,
     if make_vid == True:
         media.write_video('full_hindlimb_sim.mp4', frames, fps=framerate)
 
+    data = 'data'
+
+    np.save(f'Python/{data}/comm_times.npy', np.arange(comm_index*comm_dt*1000))
+    np.save(f'Python/{data}/time.npy', time)
+    np.save(f'Python/{data}/sns_sim_data.npy', sns_sim_data)
+    np.save(f'Python/{data}/sns_spk_data.npy', sns_spk_data)
+    np.save(f'Python/{data}/joint_ang.npy', joint_ang)
+    np.save(f'Python/{data}/muscle_len.npy', muscle_len)
+    np.save(f'Python/{data}/muscle_vel.npy', muscle_vel)
+    np.save(f'Python/{data}/muscle_ten.npy', muscle_ten)
+
     # cost = plot_gaits(time, joint_ang)
     # plot_length(time, muscle_len)
     # plot_velocity(time, muscle_vel)
     # plot_joint(time, joint_ang)
     plot_sns(t, sns_sim_data.T)
-    # plot_spk(t, sns_spk_data.T)
+    plot_spk(t, sns_spk_data.T)
     # Use combined per-leg master plot (angle, length, velocity)
-    plot_legs_master_summary(np.arange(comm_index), joint_ang, muscle_len, muscle_vel, muscle_ten)
+    plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
     
     times = [time_print, time_sns, time_spk, time_spkqueue, time_mujo, time_feed, time_vid, time_loop]
     plot_times(times)
@@ -1396,15 +1377,16 @@ def main():
     muscle_mutt = True
     make_vid    = False
 
-    spike_port_name = "/dev/cu.usbmodem164142201" # port to send spikes to the Teensy
-    sense_port_name = "/dev/cu.usbmodem164372401" # port from Teensy which obtains sense data
+    spike_port_name = "COM5" # port to send spikes to the Teensy
+    sense_port_name = "COM4" # port from Teensy which obtains sense data
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
+    data_location = 'data' # location to save data
 
     cpg_gsyn = 1.4  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 30    # simulation end seconds
+    end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
-    comm_freq = 60
+    comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
     num_comms = int(comm_freq * end_time)
     Iapp =  np.zeros([num_steps,1]) # Do not edit
     Ipert = np.zeros([num_steps,1]) # Do not edit
@@ -1423,7 +1405,8 @@ def main():
                     muscle_mutt=muscle_mutt,
                     make_vid=make_vid,
                     spike_port_name=spike_port_name,
-                    sense_port_name=sense_port_name)
+                    sense_port_name=sense_port_name,
+                    data_location=data_location)
     return cost
 
 

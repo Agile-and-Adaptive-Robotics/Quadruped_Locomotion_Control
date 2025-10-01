@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <Muscle.h>
+#include "Muscle.h"
 /*
  * Py_Ard_Pipeline_Mult_Muscles
  *  
@@ -150,19 +149,7 @@ void setup() {
   wristLEX.SetPulseFrequency(100);
   wristLFL.SetPulseFrequency(100);
 
-  hipLEX.ShouldPulseStart();
-  hipLFL.ShouldPulseStart();
-  hipREX.ShouldPulseStart();
-  hipRFL.ShouldPulseStart();
-  kneeREX.ShouldPulseStart();
-  ankleREX.ShouldPulseStart();
-  kneeLEX.ShouldPulseStart();
-  ankleLEX.ShouldPulseStart();
-  shoulderREX.ShouldPulseStart();
-  wristREX.ShouldPulseStart();
-  shoulderLEX.ShouldPulseStart();
-  wristLEX.ShouldPulseStart();
-  delay(5000);
+
   
 }
 
