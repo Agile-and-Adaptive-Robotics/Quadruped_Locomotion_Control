@@ -18,7 +18,7 @@ void Muscle::begin(){
   PRESSURE_PREVIOUS = 0;
   PRESSURE_GRADIENT = 0;
   
-  DT_ON = 15;
+  DT_ON = 20;
   IS_PULSING_ENABLED = false;
   IS_A_PULSE_ACTIVE = false;
   
