@@ -1199,8 +1199,9 @@ def run_sims(dt,
 
             # At comm interval, send spikes and receive sensory data
             if i * dt >= comm_index * comm_dt:               
-                limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
+                # limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
                 # limbs  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
+                limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
                 spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
                 # Wait for real time to match simulation
@@ -1382,7 +1383,7 @@ def main():
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
     data_location = 'data' # location to save data
 
-    cpg_gsyn = 1.4  # defines RG oscillation speed (small adjustments make a big difference!)
+    cpg_gsyn = 1.3  # defines RG oscillation speed (small adjustments make a big difference!)
     end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
