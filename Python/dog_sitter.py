@@ -762,7 +762,7 @@ def muscle_data(
     based on potentiometer and pressure sensor readings.
     """
     comm_index = int(comm_index)  # Ensure comm_index is an integer
-    angle_conversion = (3/2 * np.pi) / 255  # TODO: Measure this
+    angle_conversion = - (3/2 * np.pi) / 255  # TODO: Measure this
 
     # Update joint angles
     for joint in joint_ang.keys():
@@ -774,16 +774,16 @@ def muscle_data(
             if joint in muscle:
                 if any(j in muscle for j in ('wrist', 'ankle', 'knee', 'shoulder')):
 
-                    x_0 = muscle_wrap[muscle][0] #+ joint_offset[muscle][0]
-                    y_0 = muscle_wrap[muscle][1] #+ joint_offset[muscle][1]
+                        x_0 = muscle_wrap[muscle][0] #+ joint_offset[muscle][0]
+                        y_0 = muscle_wrap[muscle][1] #+ joint_offset[muscle][1]
 
-                    T= mr.FKinSpace(M[muscle], Slist[muscle], [joint_ang[joint][comm_index]])
-                    x_1 = T[0,3]
-                    y_1 = T[1,3]
+                        T= mr.FKinSpace(M[muscle], Slist[muscle], [joint_ang[joint][comm_index]])
+                        x_1 = T[0,3]
+                        y_1 = T[1,3]
 
-                    muscle_length_dynamic[muscle] = np.sqrt((x_0 - x_1)**2 + (y_0 - y_1)**2)
+                        muscle_length_dynamic[muscle] = np.sqrt((x_0 - x_1)**2 + (y_0 - y_1)**2) # * np.sign(y_0-y_1)  * np.sign(x_0-x_1)
 
-                    muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
+                        muscle_len[muscle][comm_index] =  muscle_length_dynamic[muscle]+ muscle_length_dynamic[muscle]
 
                 elif any(j in muscle for j in ('hip', 'scapula')):
                     r  = joint_radius[muscle] # measured directly
@@ -795,6 +795,7 @@ def muscle_data(
                         
                     muscle_length_dynamic[muscle] = r * theta_0
                     muscle_len[muscle][comm_index] = muscle_length_static[muscle] + muscle_length_dynamic[muscle]
+
                 else: 
                     print('ERROR! with', muscle, 'muscle')
 
@@ -823,14 +824,14 @@ def muscle_data(
         muscle_ten[muscle][comm_index] = c_0 * (np.exp(float(-c_1 * ep)) - 1) + (P * np.exp(float(-c_2 * ep**2)))
 
     # Print joint status to terminal
-    sys.stdout.write(f"\033[{len(joint_ang.keys())}A")
-     # Update muscle lengths
-    for muscle in muscle_len.keys():
-        for joint in joint_ang.keys():
-            if joint in muscle:
-                sys.stdout.write("\033[K")
+    # sys.stdout.write(f"\033[{len(joint_ang.keys())}A")
+    #  # Update muscle lengths
+    # for muscle in muscle_len.keys():
+    #     for joint in joint_ang.keys():
+    #         if joint in muscle:
+                # sys.stdout.write("\033[K")
                 # sys.stdout.write(f"{muscle:<30} {round((joint_ang[joint][comm_index]+muscle_insertion_rest_polar[muscle][1]),2):<10}  {round(muscle_length_dynamic[muscle],4):<10} {round(muscle_len[muscle][comm_index],4):<10}\n")
-                sys.stdout.write(f"{muscle:<30} {round(muscle_len[muscle][comm_index],4):<10} {round(muscle_ten[muscle][comm_index],4):<10}\n")
+                # sys.stdout.write(f"{muscle:<30} {round(muscle_len[muscle][comm_index],4):<10} {round(muscle_ten[muscle][comm_index],4):<10}\n")
  
     return
 
@@ -1012,12 +1013,16 @@ def run_sims(dt,
                                       [0,1,0,muscle_insertion[muscle][1]],
                                       [0,0,1,0],
                                       [0,0,0,1]])
-                Slist[muscle] = np.array([[0],
-                                           [0],
-                                           [1],
-                                           [joint_offset[muscle][1]],
-                                           [0],
-                                           [0]])
+            # Revolute about z through q = (qx, qy, 0)
+                # w = [0,0,1]; v = -w x q = [ qy, -qx, 0 ]
+                qx = float(joint_offset[muscle][0])
+                qy = float(joint_offset[muscle][1])
+                Slist[muscle] = np.array([[0.0],
+                                           [0.0],
+                                           [1.0],
+                                           [qy],
+                                           [-qx],
+                                           [0.0]])
 
 
         muscle_insertion_rest_polar = {name: [0,0] for name in muscles_list} # muscle insertion point in polar coordinates
@@ -1110,10 +1115,7 @@ def run_sims(dt,
         # Potentiometer and pressure sensor calibration
         sense_port.write(bytearray([255]))
         for joint in potentiometer_data.keys():
-            if 'L_' in joint:
-                potentiometer_data[joint][0] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
-            elif 'R_' in joint:
-                potentiometer_data[joint][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8) # Potentiometer configuration creates signals of the opposite sign on the right and left sides.
+            potentiometer_data[joint][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
         for muscle in pressure_sensor_data.keys():
             pressure_sensor_data[muscle][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
         
