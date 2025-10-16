@@ -508,25 +508,23 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
     exc_0_1_ext = NonSpikingSynapse(max_conductance=0.0204*0.15*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60) # Proportional to the period
     exc_1_5     = NonSpikingSynapse(max_conductance=0.4286*0.75*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60)  # inversely proportional to the period
 
-    # TODO: We are getting close! Edits to the conductances values in the forelimb 
-    # construction yeld better MN activity compared to the PF networks (no changes
-    # from the RG to PF conductances). However, now the RGs seems to want to move 
-    # in unison, regardless of whether they are mutually inhibited or not. Thus we
-    # need to find out the reason for this, and fast!!! 
+    """
+    LEFT AND RIGHT LIMB RHYTHM GENERATOR NETWORK CONNECTIONS
 
-    # whole_net.add_neuron(base_neuron, 'inh_L')
-    # whole_net.add_neuron(base_neuron, 'V2a_L')
-    # whole_net.add_neuron(base_neuron, 'V0v_L')
+        Fore and hind limb RG interneuron synapses:
+
+            exc_2_5:           Pre-V0d synapse      # Proportional to the period
+            exc_0_3:           Pre-V3e synapse      # Inversely proportional to the period. Small change has big impact
+            inh_6_0:           Post-V0d synapse     # Inversely proportional to the period
+            exc_0_1_ext:       Post-V3e synapse     # Proportional to the period
+    """
+
+    #############################################
+    ############# HIND LIMBS ####################
+    #############################################
     whole_net.add_neuron(base_neuron, 'V0d_hi_L')
     whole_net.add_neuron(base_neuron, 'V3f_hi_L')
     whole_net.add_neuron(base_neuron, 'V3e_hi_L')
-
-    # whole_net.add_neuron(base_neuron, 'inh_R')
-    # whole_net.add_neuron(base_neuron, 'V2a_R')
-    # whole_net.add_neuron(base_neuron, 'V0v_R')
-    whole_net.add_neuron(base_neuron, 'V0d_hi_R')
-    whole_net.add_neuron(base_neuron, 'V3f_hi_R')
-    whole_net.add_neuron(base_neuron, 'V3e_hi_R')
 
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_hi_L')
     whole_net.add_connection(inh_6_0, 'V0d_hi_L', 'RG_HC_flx_hi_R')
@@ -536,7 +534,10 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
 
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_hi_L')
     whole_net.add_connection(exc_0_1_ext, 'V3e_hi_L', 'RG_HC_ext_hi_R')
-    # whole_net.add_connection(exc_1_5, 'V3e_hi_L', 'RG_IN_ext_hi_R')
+
+    whole_net.add_neuron(base_neuron, 'V0d_hi_R')
+    whole_net.add_neuron(base_neuron, 'V3f_hi_R')
+    whole_net.add_neuron(base_neuron, 'V3e_hi_R')
 
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_hi_R')
     whole_net.add_connection(inh_6_0, 'V0d_hi_R', 'RG_HC_flx_hi_L')
@@ -546,19 +547,15 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
 
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_hi_R')
     whole_net.add_connection(exc_0_1_ext, 'V3e_hi_R', 'RG_HC_ext_hi_L')
-    # whole_net.add_connection(exc_1_5, 'V3e_hi_R', 'RG_IN_ext_hi_L')
 
 
-    # create forelimb neurons in the same method as for the hind hindlimbs
+    #############################################
+    ############# FORE LIMBS ####################
+    #############################################
     whole_net.add_neuron(base_neuron, 'V0d_fo_L')
     whole_net.add_neuron(base_neuron, 'V3f_fo_L')
     whole_net.add_neuron(base_neuron, 'V3e_fo_L')
 
-    whole_net.add_neuron(base_neuron, 'V0d_fo_R')
-    whole_net.add_neuron(base_neuron, 'V3f_fo_R')
-    whole_net.add_neuron(base_neuron, 'V3e_fo_R')
-
-    # connect forelimbs with the same interneurons as for the hind hindlimbs
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_fo_L')
     whole_net.add_connection(inh_6_0, 'V0d_fo_L', 'RG_HC_flx_fo_R')
 
@@ -567,6 +564,10 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
 
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_fo_L')
     whole_net.add_connection(exc_0_1_ext, 'V3e_fo_L', 'RG_HC_ext_fo_R')
+
+    whole_net.add_neuron(base_neuron, 'V0d_fo_R')
+    whole_net.add_neuron(base_neuron, 'V3f_fo_R')
+    whole_net.add_neuron(base_neuron, 'V3e_fo_R')
 
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_fo_R')
     whole_net.add_connection(inh_6_0, 'V0d_fo_R', 'RG_HC_flx_fo_L')
@@ -577,75 +578,65 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_fo_R')
     whole_net.add_connection(exc_0_1_ext, 'V3e_fo_R', 'RG_HC_ext_fo_L')
 
-    """
-    The connection of RG networks above produces inverse correlations between extensor and flexor RG neurons.
-    For example, when the RG_HC_flx_R neuron is excited, the RG_HC_flx_L neuron is inhibited through stimulation
-    of the V0d_R internueron. 
 
-    The V3e interneurons between the left and right extensor RGs have additional connections to the extensor HC
-    interneuron which provides an inhibitory connection from the extensor HC to the flexor HC. To the best of 
-    my knowledge this causes, for example, the left flexor RG to become excited when the right extensor RG is
-    excited.
-
-    Thus, the only additions needed to connect the fore and hind limb RGs will be, for now, inhibitory connections
-
-
-    Rhythm Generator Connections
-
-        Fore and Hind limb Interneurons:
-
-            V0d_L_hi2fo:       Left hind to fore limb extensor RG interneuron                                    
-            V0d_L_fo2hi:       Left fore to hind limb extensor RG interneuron
-            V3e_L_hi2fo:       Left hind to fore limb extensor RG interneuron
-            V3e_L_fo2hi:       Left fore to hind limb extensor RG interneuron
-            V0d_R_hi2fo:       Right hind to fore limb extensor RG interneuron                                    
-            V0d_R_fo2hi:       Right fore to hind limb extensor RG interneuron
-            V3e_R_hi2fo:       Right hind to fore limb extensor RG interneuron
-            V3e_R_fo2hi:       Right fore to hind limb extensor RG interneuron
-
-        Fore and hind limb RG interneuron synapses:
-
-            exc_2_5:           Pre-V0d synapse      # Proportional to the period
-            exc_0_3:           Pre-V3e synapse      # Inversely proportional to the period. Small change has big impact
-            inh_6_0:           Post-V0d synapse     # Inversely proportional to the period
-            exc_0_1_ext:       Post-V3e synapse     # Proportional to the period
-    """
-
+    #############################################
+    ############# LEFT LIMBS ####################
+    #############################################
     whole_net.add_neuron(base_neuron, 'V0d_L_hi2fo')
-    whole_net.add_neuron(base_neuron, 'V0d_L_fo2hi')
+    whole_net.add_neuron(base_neuron, 'V3f_L_hi2fo')
     whole_net.add_neuron(base_neuron, 'V3e_L_hi2fo')
-    whole_net.add_neuron(base_neuron, 'V3e_L_fo2hi')
-    whole_net.add_neuron(base_neuron, 'V0d_R_hi2fo')
-    whole_net.add_neuron(base_neuron, 'V0d_R_fo2hi')
-    whole_net.add_neuron(base_neuron, 'V3e_R_hi2fo')
-    whole_net.add_neuron(base_neuron, 'V3e_R_fo2hi')
 
-    # Left RG internueron connections
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_L_hi2fo')
     whole_net.add_connection(inh_6_0, 'V0d_L_hi2fo', 'RG_HC_flx_fo_L')
 
+    whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3e_L_hi2fo')
+    whole_net.add_connection(exc_0_1_flx, 'V3f_L_hi2fo ', 'RG_HC_flx_fo_L')
+
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_L_hi2fo')
     whole_net.add_connection(exc_0_1_ext, 'V3e_L_hi2fo', 'RG_HC_ext_fo_L')
-
+    
+    whole_net.add_neuron(base_neuron, 'V0d_L_fo2hi') 
+    whole_net.add_neuron(base_neuron, 'V3f_L_fo2hi')
+    whole_net.add_neuron(base_neuron, 'V3e_L_fo2hi')
+    
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_L_fo2hi')
     whole_net.add_connection(inh_6_0, 'V0d_L_fo2hi', 'RG_HC_flx_hi_L')
+
+    whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_L', 'V3f_L_fo2hi')
+    whole_net.add_connection(exc_0_1_flx, 'V3f_L_fo2hi', 'RG_HC_flx_hi_L')
 
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_L_fo2hi')
     whole_net.add_connection(exc_0_1_ext, 'V3e_L_fo2hi', 'RG_HC_ext_hi_L')
 
-    # Right RG internueron connections
+
+    #############################################
+    ############# RIGHT LIMBS ###################
+    #############################################
+    whole_net.add_neuron(base_neuron, 'V0d_R_hi2fo')
+    whole_net.add_neuron(base_neuron, 'V3f_R_hi2fo')
+    whole_net.add_neuron(base_neuron, 'V3e_R_hi2fo')
+
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_R_hi2fo')
     whole_net.add_connection(inh_6_0, 'V0d_R_hi2fo', 'RG_HC_flx_fo_R')
+
+    whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_R', 'V3e_R_hi2fo')
+    whole_net.add_connection(exc_0_1_flx, 'V3f_R_hi2fo', 'RG_HC_flx_fo_R')
 
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_R_hi2fo')
     whole_net.add_connection(exc_0_1_ext, 'V3e_R_hi2fo', 'RG_HC_ext_fo_R')
 
+    whole_net.add_neuron(base_neuron, 'V0d_R_fo2hi')
+    whole_net.add_neuron(base_neuron, 'V3f_R_fo2hi')
+    whole_net.add_neuron(base_neuron, 'V3e_R_fo2hi')
+
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_R_fo2hi')
     whole_net.add_connection(inh_6_0, 'V0d_R_fo2hi', 'RG_HC_flx_hi_R')
 
+    whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_R', 'V3f_R_fo2hi')
+    whole_net.add_connection(exc_0_1_flx, 'V3f_R_fo2hi', 'RG_HC_flx_hi_R')
+
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_R_fo2hi')
     whole_net.add_connection(exc_0_1_ext, 'V3e_R_fo2hi', 'RG_HC_ext_hi_R')
-
 
     render(whole_net, view=False, save=True, filename='Python/fig_networks/jack_sns.png', img_format='png')
 
