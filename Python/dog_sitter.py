@@ -30,8 +30,6 @@ import serial
 from queue import Queue
 from sns_network_model import build_net, spike_net
 
-import modern_robotics as mr
-
 
 # =============================
 # Path Setup
@@ -876,6 +874,8 @@ def run_sims(dt,
     We want the simulation to run fast, such that errors are not created. However, we only want to send spikes in batches.
     Spikes are "and"ed on to each other and send at 50 Hz.
     '''
+    if muscle_mutt:
+        import modern_robotics as mr
 
     # ----------------------
     # Initialization Section
@@ -924,6 +924,37 @@ def run_sims(dt,
     # --- Raw Robot Data Structures ---
     potentiometer_data      = {key: np.zeros(num_comms) for key in joint_list}
     pressure_sensor_data    = {key: np.zeros(num_comms) for key in muscles_list}
+
+    act_mid = {name: -65 for name in muscles_list}
+    for muscle in muscles_list:
+        if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -95
+        elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -95
+        elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -95
+        elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -95
+        elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
+        elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
+        elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -95
+        elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -95
+        elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -95
+        elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -95
+        elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
+        elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
+
+    # --- Motoneuron Properties ---
+    act_bandwidth = {name: 1.0 for name in muscles_list}
+    for muscle in muscles_list:
+        if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 10
+        elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 10
+        elif 'knee_joint_ext_muscle' in muscle:       act_bandwidth[muscle] = 10
+        elif 'knee_joint_flx_muscle' in muscle:       act_bandwidth[muscle] = 10
+        elif 'ankle_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
+        elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
+        elif 'scapula_joint_ext_muscle' in muscle:    act_bandwidth[muscle] = 10
+        elif 'scapula_joint_flx_muscle' in muscle:    act_bandwidth[muscle] = 10
+        elif 'shoulder_joint_ext_muscle' in muscle:   act_bandwidth[muscle] = 10
+        elif 'shoulder_joint_flx_muscle' in muscle:   act_bandwidth[muscle] = 10
+        elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
+        elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
 
     # --- Muscle Properties ---
     if muscle_mutt:
@@ -1071,36 +1102,6 @@ def run_sims(dt,
             elif 'wrist_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.15
             elif 'wrist_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.128
         
-        # --- Motoneuron Properties ---
-        act_bandwidth = {name: 1.0 for name in muscles_list}
-        for muscle in muscles_list:
-            if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 10
-            elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 10
-            elif 'knee_joint_ext_muscle' in muscle:       act_bandwidth[muscle] = 10
-            elif 'knee_joint_flx_muscle' in muscle:       act_bandwidth[muscle] = 10
-            elif 'ankle_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'scapula_joint_ext_muscle' in muscle:    act_bandwidth[muscle] = 10
-            elif 'scapula_joint_flx_muscle' in muscle:    act_bandwidth[muscle] = 10
-            elif 'shoulder_joint_ext_muscle' in muscle:   act_bandwidth[muscle] = 10
-            elif 'shoulder_joint_flx_muscle' in muscle:   act_bandwidth[muscle] = 10
-            elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
-
-        act_mid = {name: -65 for name in muscles_list}
-        for muscle in muscles_list:
-            if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -95
-            elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -95
-            elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -95
-            elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -95
-            elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
-            elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
-            elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -95
-            elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -95
-            elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -95
-            elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -95
-            elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
-            elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
 
         # --- Teensy/Serial Initialization ---
         spike_port = serial.Serial(port=spike_port_name, baudrate=9600, timeout=0.1)
@@ -1146,13 +1147,18 @@ def run_sims(dt,
     mn_indices = {}
     for ind, name in enumerate(muscles_list):
         if ind < 6:
-            mn_indices[name] = ind
+            indeek = ind
+            mn_indices[name] = indeek
         elif 6 <= ind < 12:
-            mn_indices[name] = ind + 6
+            indeek = ind + 6
+            mn_indices[name] = indeek
         elif 12 <= ind < 18:
-            mn_indices[name] = ind + 6*2
+            indeek = ind + 6*2
+            mn_indices[name] = indeek
         else:
-            mn_indices[name] = ind + 6*3
+            indeek = ind + 6*3
+            mn_indices[name] = indeek
+        print(f'{name}_index = {indeek}')
 
     # --- Loop Timing Variables ---
     time_print    = 0
@@ -1328,14 +1334,18 @@ def run_sims(dt,
     np.save(f'Python/{data}/muscle_vel.npy', muscle_vel)
     np.save(f'Python/{data}/muscle_ten.npy', muscle_ten)
 
-    # cost = plot_gaits(time, joint_ang)
+    plot_sns(t, sns_sim_data.T)
+    plot_spk(t, sns_spk_data.T)
+    if muscle_mutt:
+        plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
+    else:
+        cost = plot_gaits(time, joint_ang)
     # plot_length(time, muscle_len)
     # plot_velocity(time, muscle_vel)
     # plot_joint(time, joint_ang)
-    plot_sns(t, sns_sim_data.T)
-    plot_spk(t, sns_spk_data.T)
+    
     # Use combined per-leg master plot (angle, length, velocity)
-    plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
+    
     
     times = [time_print, time_sns, time_spk, time_spkqueue, time_mujo, time_feed, time_vid, time_loop]
     plot_times(times)
@@ -1377,15 +1387,18 @@ def main():
     """
 
     feed_fwd    = False
-    muscle_mutt = True
-    make_vid    = False
+    muscle_mutt = False
+    make_vid    = True
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
+    # if muscle_mutt:
     data_location = 'data' # location to save data
+    # else:
+    #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
-    cpg_gsyn = 1.3  # defines RG oscillation speed (small adjustments make a big difference!)
+    cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
     end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
