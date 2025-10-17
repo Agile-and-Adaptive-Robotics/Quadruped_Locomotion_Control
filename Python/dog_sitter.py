@@ -1145,13 +1145,18 @@ def run_sims(dt,
     mn_indices = {}
     for ind, name in enumerate(muscles_list):
         if ind < 6:
-            mn_indices[name] = ind
+            indeek = ind
+            mn_indices[name] = indeek
         elif 6 <= ind < 12:
-            mn_indices[name] = ind + 6
+            indeek = ind + 6
+            mn_indices[name] = indeek
         elif 12 <= ind < 18:
-            mn_indices[name] = ind + 6*2
+            indeek = ind + 6*2
+            mn_indices[name] = indeek
         else:
-            mn_indices[name] = ind + 6*3
+            indeek = ind + 6*3
+            mn_indices[name] = indeek
+        print(f'{name}_index = {indeek}')
 
     # --- Loop Timing Variables ---
     time_print    = 0
@@ -1386,9 +1391,12 @@ def main():
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data
     xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
+    # if muscle_mutt:
     data_location = 'data' # location to save data
+    # else:
+    #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
-    cpg_gsyn = 1.3  # defines RG oscillation speed (small adjustments make a big difference!)
+    cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
     end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
