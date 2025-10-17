@@ -30,8 +30,6 @@ import serial
 from queue import Queue
 from sns_network_model import build_net, spike_net
 
-import modern_robotics as mr
-
 
 # =============================
 # Path Setup
@@ -875,6 +873,8 @@ def run_sims(dt,
     We want the simulation to run fast, such that errors are not created. However, we only want to send spikes in batches.
     Spikes are "and"ed on to each other and send at 50 Hz.
     '''
+    if muscle_mutt:
+        import modern_robotics as mr
 
     # ----------------------
     # Initialization Section
@@ -923,6 +923,37 @@ def run_sims(dt,
     # --- Raw Robot Data Structures ---
     potentiometer_data      = {key: np.zeros(num_comms) for key in joint_list}
     pressure_sensor_data    = {key: np.zeros(num_comms) for key in muscles_list}
+
+    act_mid = {name: -65 for name in muscles_list}
+    for muscle in muscles_list:
+        if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -95
+        elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -95
+        elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -95
+        elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -95
+        elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
+        elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
+        elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -95
+        elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -95
+        elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -95
+        elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -95
+        elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
+        elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
+
+    # --- Motoneuron Properties ---
+    act_bandwidth = {name: 1.0 for name in muscles_list}
+    for muscle in muscles_list:
+        if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 10
+        elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 10
+        elif 'knee_joint_ext_muscle' in muscle:       act_bandwidth[muscle] = 10
+        elif 'knee_joint_flx_muscle' in muscle:       act_bandwidth[muscle] = 10
+        elif 'ankle_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
+        elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
+        elif 'scapula_joint_ext_muscle' in muscle:    act_bandwidth[muscle] = 10
+        elif 'scapula_joint_flx_muscle' in muscle:    act_bandwidth[muscle] = 10
+        elif 'shoulder_joint_ext_muscle' in muscle:   act_bandwidth[muscle] = 10
+        elif 'shoulder_joint_flx_muscle' in muscle:   act_bandwidth[muscle] = 10
+        elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
+        elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
 
     # --- Muscle Properties ---
     if muscle_mutt:
@@ -1066,36 +1097,6 @@ def run_sims(dt,
             elif 'wrist_joint_flx_muscle' in muscle:      BPA_L0[muscle] = 0.15
             elif 'wrist_joint_ext_muscle' in muscle:      BPA_L0[muscle] = 0.128
         
-        # --- Motoneuron Properties ---
-        act_bandwidth = {name: 1.0 for name in muscles_list}
-        for muscle in muscles_list:
-            if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 10
-            elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 10
-            elif 'knee_joint_ext_muscle' in muscle:       act_bandwidth[muscle] = 10
-            elif 'knee_joint_flx_muscle' in muscle:       act_bandwidth[muscle] = 10
-            elif 'ankle_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'ankle_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'scapula_joint_ext_muscle' in muscle:    act_bandwidth[muscle] = 10
-            elif 'scapula_joint_flx_muscle' in muscle:    act_bandwidth[muscle] = 10
-            elif 'shoulder_joint_ext_muscle' in muscle:   act_bandwidth[muscle] = 10
-            elif 'shoulder_joint_flx_muscle' in muscle:   act_bandwidth[muscle] = 10
-            elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
-            elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
-
-        act_mid = {name: -65 for name in muscles_list}
-        for muscle in muscles_list:
-            if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -95
-            elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -95
-            elif 'knee_joint_ext_muscle' in muscle:       act_mid[muscle] = -95
-            elif 'knee_joint_flx_muscle' in muscle:       act_mid[muscle] = -95
-            elif 'ankle_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
-            elif 'ankle_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
-            elif 'scapula_joint_ext_muscle' in muscle:    act_mid[muscle] = -95
-            elif 'scapula_joint_flx_muscle' in muscle:    act_mid[muscle] = -95
-            elif 'shoulder_joint_ext_muscle' in muscle:   act_mid[muscle] = -95
-            elif 'shoulder_joint_flx_muscle' in muscle:   act_mid[muscle] = -95
-            elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
-            elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
 
         # --- Teensy/Serial Initialization ---
         spike_port = serial.Serial(port=spike_port_name, baudrate=9600, timeout=0.1)
@@ -1326,7 +1327,8 @@ def run_sims(dt,
     np.save(f'Python/{data}/muscle_vel.npy', muscle_vel)
     np.save(f'Python/{data}/muscle_ten.npy', muscle_ten)
 
-    # cost = plot_gaits(time, joint_ang)
+    if not muscle_mutt:
+        cost = plot_gaits(time, joint_ang)
     # plot_length(time, muscle_len)
     # plot_velocity(time, muscle_vel)
     # plot_joint(time, joint_ang)
@@ -1375,8 +1377,8 @@ def main():
     """
 
     feed_fwd    = False
-    muscle_mutt = True
-    make_vid    = False
+    muscle_mutt = False
+    make_vid    = True
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data

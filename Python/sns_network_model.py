@@ -589,8 +589,8 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
     whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_L_hi2fo')
     whole_net.add_connection(inh_6_0, 'V0d_L_hi2fo', 'RG_HC_flx_fo_L')
 
-    whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3e_L_hi2fo')
-    whole_net.add_connection(exc_0_1_flx, 'V3f_L_hi2fo ', 'RG_HC_flx_fo_L')
+    whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3f_L_hi2fo')
+    whole_net.add_connection(exc_0_1_flx, 'V3f_L_hi2fo', 'RG_HC_flx_fo_L')
 
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_L_hi2fo')
     whole_net.add_connection(exc_0_1_ext, 'V3e_L_hi2fo', 'RG_HC_ext_fo_L')
