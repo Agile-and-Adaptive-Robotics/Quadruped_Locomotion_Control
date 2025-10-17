@@ -1327,15 +1327,18 @@ def run_sims(dt,
     np.save(f'Python/{data}/muscle_vel.npy', muscle_vel)
     np.save(f'Python/{data}/muscle_ten.npy', muscle_ten)
 
-    if not muscle_mutt:
+    plot_sns(t, sns_sim_data.T)
+    plot_spk(t, sns_spk_data.T)
+    if muscle_mutt:
+        plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
+    else:
         cost = plot_gaits(time, joint_ang)
     # plot_length(time, muscle_len)
     # plot_velocity(time, muscle_vel)
     # plot_joint(time, joint_ang)
-    plot_sns(t, sns_sim_data.T)
-    plot_spk(t, sns_spk_data.T)
+    
     # Use combined per-leg master plot (angle, length, velocity)
-    plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
+    
     
     times = [time_print, time_sns, time_spk, time_spkqueue, time_mujo, time_feed, time_vid, time_loop]
     plot_times(times)
