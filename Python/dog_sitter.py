@@ -1324,7 +1324,7 @@ def run_sims(dt,
 
     data = 'data'
 
-    np.save(f'Python/{data}/comm_times.npy', np.arange(comm_index*comm_dt*1000))
+    np.save(f'Python/{data}/comm_times.npy', np.arange(comm_index)*comm_dt*1000)
     np.save(f'Python/{data}/time.npy', time)
     np.save(f'Python/{data}/sns_sim_data.npy', sns_sim_data)
     np.save(f'Python/{data}/sns_spk_data.npy', sns_spk_data)
