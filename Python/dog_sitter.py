@@ -20,6 +20,7 @@ import time as clock
 import time as world_clock
 import numpy as np
 # import pandas as pd
+import modern_robotics as mr
 import mujoco
 import mujoco.viewer
 import mediapy as media
@@ -874,8 +875,6 @@ def run_sims(dt,
     We want the simulation to run fast, such that errors are not created. However, we only want to send spikes in batches.
     Spikes are "and"ed on to each other and send at 50 Hz.
     '''
-    if muscle_mutt:
-        import modern_robotics as mr
 
     # ----------------------
     # Initialization Section
@@ -1387,8 +1386,8 @@ def main():
     """
 
     feed_fwd    = False
-    muscle_mutt = False
-    make_vid    = True
+    muscle_mutt = True
+    make_vid    = False
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data
@@ -1399,7 +1398,7 @@ def main():
     #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
     cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 5    # simulation end seconds
+    end_time = 10    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
