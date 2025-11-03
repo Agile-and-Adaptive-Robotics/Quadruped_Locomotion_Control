@@ -38,25 +38,25 @@ class MotorCircuit(Network): # Note that this network is also a preset available
         self.add_neuron(base_neuron, name='IbIN_flx', color='mediumseagreen') 
         
         #define CMM synapses
-        Ia_flx_Ia_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)
-        Ia_ext_Ia_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)
-        Ia_flx_mn_ext = NonSpikingSynapse(max_conductance=2.0, reversal_potential=-100,e_hi=-40, e_lo=-60)
-        Ia_ext_mn_flx = NonSpikingSynapse(max_conductance=2.0, reversal_potential=-100,e_hi=-40, e_lo=-60)
-        mn_flx_rc_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40,e_hi=-10, e_lo=-100)
-        mn_ext_rc_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40,e_hi=-10, e_lo=-100)
-        rc_ext_Ia_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)
-        rc_flx_Ia_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)
-        rc_ext_mn_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-100,e_hi=-40, e_lo=-60)
-        rc_flx_mn_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-100,e_hi=-40, e_lo=-60)
-        rc_flx_rc_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)
-        rc_ext_rc_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)
+        Ia_flx_Ia_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)   # inhibit
+        Ia_ext_Ia_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)   # inhibit
+        Ia_flx_mn_ext = NonSpikingSynapse(max_conductance=2.0, reversal_potential=-100,e_hi=-40, e_lo=-60)  # inhibit
+        Ia_ext_mn_flx = NonSpikingSynapse(max_conductance=2.0, reversal_potential=-100,e_hi=-40, e_lo=-60)  # inhibit
+        mn_flx_rc_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40,e_hi=-10, e_lo=-100)  # excite
+        mn_ext_rc_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40,e_hi=-10, e_lo=-100)  # excite
+        rc_ext_Ia_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)   # inhibit
+        rc_flx_Ia_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)   # inhibit
+        rc_ext_mn_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-100,e_hi=-40, e_lo=-60)  # inhibit
+        rc_flx_mn_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-100,e_hi=-40, e_lo=-60)  # inhibit
+        rc_flx_rc_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)   # inhibit
+        rc_ext_rc_flx = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70,e_hi=-40, e_lo=-60)   # inhibit
 
         self.add_connection(Ia_flx_Ia_ext, 'Ia_flx', 'Ia_ext')
         self.add_connection(Ia_ext_Ia_flx, 'Ia_ext', 'Ia_flx')
         self.add_connection(Ia_flx_mn_ext, 'Ia_flx', 'MN_ext')
         self.add_connection(Ia_ext_mn_flx, 'Ia_ext', 'MN_flx')
-        self.add_connection(mn_flx_rc_flx, 'MN_flx', 'RC_flx')
-        self.add_connection(mn_ext_rc_ext, 'MN_ext', 'RC_ext')
+        self.add_connection(mn_flx_rc_flx, 'MN_flx', 'RC_flx') # excite
+        self.add_connection(mn_ext_rc_ext, 'MN_ext', 'RC_ext') # excite
         self.add_connection(rc_ext_Ia_ext, 'RC_ext', 'Ia_ext')
         self.add_connection(rc_flx_Ia_flx, 'RC_flx', 'Ia_flx')
         self.add_connection(rc_ext_mn_ext, 'RC_ext', 'MN_ext')
@@ -64,12 +64,12 @@ class MotorCircuit(Network): # Note that this network is also a preset available
         self.add_connection(rc_flx_rc_ext, 'RC_flx', 'RC_ext')
         self.add_connection(rc_ext_rc_flx, 'RC_ext', 'RC_flx')
 
-        Ib2MN_flx = NonSpikingSynapse(max_conductance=1.0, reversal_potential=-10, e_hi=-40, e_lo=-60)
-        Ib2MN_ext = NonSpikingSynapse(max_conductance=0.59, reversal_potential=-10, e_hi=-40, e_lo=-60)
-        IaIn2Iaflx = NonSpikingSynapse(max_conductance=0.695, reversal_potential=-40, e_hi=-40, e_lo=-60)
-        IaIn2Iaext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40, e_hi=-40, e_lo=-60)
-        IaIN2MNflx = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)
-        IaIN2MNext = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)
+        Ib2MN_flx = NonSpikingSynapse(max_conductance=1.0, reversal_potential=-10, e_hi=-40, e_lo=-60)      # excite
+        Ib2MN_ext = NonSpikingSynapse(max_conductance=0.59, reversal_potential=-10, e_hi=-40, e_lo=-60)     # excite
+        IaIn2Iaflx = NonSpikingSynapse(max_conductance=0.695, reversal_potential=-40, e_hi=-40, e_lo=-60)   # excite    
+        IaIn2Iaext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40, e_hi=-40, e_lo=-60)     # excite
+        IaIN2MNflx = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)       # excite
+        IaIN2MNext = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)       # excite
 
         self.add_connection(Ib2MN_ext, 'IbIN_ext', 'MN_ext')
         self.add_connection(Ib2MN_flx, 'IbIN_flx', 'MN_flx')

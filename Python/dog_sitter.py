@@ -20,7 +20,7 @@ import time as clock
 import time as world_clock
 import numpy as np
 # import pandas as pd
-import modern_robotics as mr
+# import modern_robotics as mr
 import mujoco
 import mujoco.viewer
 import mediapy as media
@@ -1267,7 +1267,7 @@ def run_sims(dt,
                 mujoco_data.act[muscle_indices[muscle]] = stim_to_act(sns_sim_data[i-1, mn_indices[muscle]])
             for muscle in muscle_indices.keys():
                 if sns_spk_data[i, muscle_indices[muscle]] == 1:
-                    pulse_data[i:i+int(10 - 1), muscle_indices[muscle]] = 1
+                    pulse_data[i:i+int(20 - 1), muscle_indices[muscle]] = 1
                 mujoco_data.act[muscle_indices[muscle]] = pulse_data[i, muscle_indices[muscle]]
             mujoco.mj_step(mujoco_sim, mujoco_data)
             time[i] = mujoco_data.time
@@ -1386,8 +1386,8 @@ def main():
     """
 
     feed_fwd    = False
-    muscle_mutt = True
-    make_vid    = False
+    muscle_mutt = False
+    make_vid    = True
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data
@@ -1398,7 +1398,7 @@ def main():
     #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
     cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 10    # simulation end seconds
+    end_time = 20    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
