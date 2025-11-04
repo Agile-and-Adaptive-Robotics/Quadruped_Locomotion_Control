@@ -17,7 +17,7 @@ Additionally, I will also discuss the modifications to Clayton Jackson's rat mod
 However, I will, once again, leave the in depth discussion of dual-layered CPG structure to the research of dual-layered CPGs.
 I will also discuss the developmemt of controller interfaces, which run on Teensy 4.1 microcontrollers and convert between high and low-level signals throughout the control loop.
 
-<img width="1499" height="755" alt="Screenshot 2025-08-10 at 7 07 29 PM" src="https://github.com/user-attachments/assets/7fd20f22-52f9-47d0-adee-f25aa41b55e1" />
+<img width="1837" height="862" alt="thesis_defense 036" src="https://github.com/user-attachments/assets/432df568-394e-4f1b-bd26-a812b217ce05" />
 
 ## Teensy 4.1
 
