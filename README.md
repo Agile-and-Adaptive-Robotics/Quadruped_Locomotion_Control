@@ -36,6 +36,10 @@ Data from each pin is limited to a single byte, for speed of transmission.
 The data is packed into a 36-byte array, and written over serial. 
 Python recieves 
 
+<img width="1892" height="850" alt="thesis_defense 031" src="https://github.com/user-attachments/assets/c9a78d3a-1b75-4dfc-9704-6470409ba8b0" />
+
+
+<img width="1844" height="793" alt="thesis_defense 033" src="https://github.com/user-attachments/assets/ee0f0050-55ba-42c1-9953-51f8d636446d" />
 
 
 ## Python
