@@ -18,6 +18,7 @@ However, I will, once again, leave the in depth discussion of dual-layered CPG s
 I will also discuss the developmemt of controller interfaces, which run on Teensy 4.1 microcontrollers and convert between high and low-level signals throughout the control loop.
 
 <img width="1800" src="https://github.com/Agile-and-Adaptive-Robotics/Quadruped_Locomotion_Control/blob/main/quad_git_images/quad_git_images.003.png" />
+*Full control systems linking Muscle Mutt and Synthetic Nervous System*
 
 ## Teensy 4.1
 
