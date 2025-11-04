@@ -17,7 +17,7 @@ Additionally, I will also discuss the modifications to Clayton Jackson's rat mod
 However, I will, once again, leave the in depth discussion of dual-layered CPG structure to the research of dual-layered CPGs.
 I will also discuss the developmemt of controller interfaces, which run on Teensy 4.1 microcontrollers and convert between high and low-level signals throughout the control loop.
 
-<img width="1800" src="https://github.com/Agile-and-Adaptive-Robotics/Quadruped_Locomotion_Control/blob/main/quad_git_images/quad_git_images.003.png" />
+<img width="1800" src="[https://github.com/Agile-and-Adaptive-Robotics/Quadruped_Locomotion_Control/blob/main/quad_git_images/quad_git_images.003.png](https://github.com/Agile-and-Adaptive-Robotics/Quadruped_Locomotion_Control/blob/main/quad_git_images/quad_git_images.003.png)" />
 
 ## Teensy 4.1
 
