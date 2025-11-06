@@ -20,7 +20,7 @@ import time as clock
 import time as world_clock
 import numpy as np
 # import pandas as pd
-# import modern_robotics as mr
+# import modern_robotics as mr  # MJL: I HAVE TO COMMENT THIS OUT ON MY LAPTOP
 import mujoco
 import mujoco.viewer
 import mediapy as media
@@ -423,7 +423,9 @@ def plot_gaits(time, joint_ang, savename=''):
     plt.savefig('plot_gaits.png')
     print("... Gait plots created")
 
-# Plotter Function entirely vibe-coded with ChatGPT
+# Plotter Function entirely vibe-coded with ChatGPT 
+# Sorry, Leo, if this doesn't make sense, code-wise. *I* wouldn't be able to tell you how it works.
+# But it makes a great little plot that you can look through!
 def plot_legs_master_summary(time, joint_ang, muscle_len, muscle_vel, muscle_ten, save_folder='python/fig_plots'):
     """
     Combined per-leg master plot.
@@ -746,7 +748,6 @@ def muscle_data(
             muscle_wrap,
             M,
             Slist,
-            muscle_insertion_rest_polar,
             joint_ang,
             joint_radius,
             BPA_L0,
@@ -761,7 +762,7 @@ def muscle_data(
     based on potentiometer and pressure sensor readings.
     """
     comm_index = int(comm_index)  # Ensure comm_index is an integer
-    angle_conversion = - (3/2 * np.pi) / 255  # TODO: Measure this
+    angle_conversion = -np.deg2rad(299.1) / 255.0
 
     # Update joint angles
     for joint in joint_ang.keys():
@@ -880,15 +881,14 @@ def run_sims(dt,
     # Initialization Section
     # ----------------------
 
-    # --- Timing and Communication ---
+    # Inidialize communication timesteps and time vectors!
     comm_dt    = 1 / comm_freq       # Communication period (s)
     comm_index = 0               # Communication event counter
 
-    # --- Simulation Time Vectors ---
     t = np.arange(0, num_steps)
     time = np.zeros([len(t)])
 
-    # --- MuJoCo and SNS Model Initialization ---
+    # MuJoCo and SNS model initialization
     mujoco_dt = dt
     sns_dt = mujoco_dt * 1000
     mujoco_sim, mujoco_data = mujoco_model(xml_path)
@@ -896,7 +896,9 @@ def run_sims(dt,
     sns_model = build_net(dt=sns_dt, cpg_gsyn=cpg_gsyn, feed_forward=feed_forward)
     spk_model = spike_net(dt=sns_dt) # Nonspiking to spiking conversion network
 
-    # --- SNS Data Structures ---
+    # ----------- DATA STRUCTURES ----------- 
+
+    # DATA STRUCTURES for SNS
     num_outputs = sns_model.num_outputs
     sns_sim_data = np.zeros([len(t), num_outputs])
     sns_sim_data[0] = [-100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60, 
@@ -911,20 +913,24 @@ def run_sims(dt,
     num_spk_in   = int(spk_model.num_inputs)
     spk_inputs   = np.concatenate([np.zeros(num_spk_in)])
 
-    # --- Muscle and Joint Initialization ---
+    # This is a convenient way to determine the indices of ALL MuJoCo objects 
     muscles_list = [mujoco.mj_id2name(mujoco_sim, mujoco.mjtObj.mjOBJ_ACTUATOR, i) for i in range(mujoco_sim.nu)]
     all_joint_names = [mujoco.mj_id2name(mujoco_sim, mujoco.mjtObj.mjOBJ_JOINT, i) for i in range(mujoco_sim.njnt)]
     joint_list = [name for name in all_joint_names if any(keyword in name for keyword in ['hip', 'knee', 'ankle', 'scapula', 'shoulder', 'wrist'])]
-
-    # --- Indices corresponding to item name ~ Needed only for MuJoCo ---
+    
+    # Link indices to their keys in a dictionary, so that we can reference them directly by name later
     joint_indices  = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_JOINT, name)    for name in  joint_list}
     muscle_indices = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_ACTUATOR, name) for name in  muscles_list}
 
-    # --- Raw Robot Data Structures ---
-    potentiometer_data      = {key: np.zeros(num_comms) for key in joint_list}
-    pressure_sensor_data    = {key: np.zeros(num_comms) for key in muscles_list}
+    # DATA STRUCTURES for raw sensor data (to be recorded at each timestep)
+    potentiometer_data   = {key: np.zeros(num_comms) for key in joint_list}
+    pressure_sensor_data = {key: np.zeros(num_comms) for key in muscles_list}
 
-    act_mid = {name: -65 for name in muscles_list}
+    # DATA STRUCTURES for non-spiking to spiking motoneuron conversion (static values)
+    act_mid = {name: 0 for name in muscles_list}
+    act_bandwidth = {name: 0 for name in muscles_list}
+
+    # set values for conversion on a motoneuron to motoneuron basis
     for muscle in muscles_list:
         if   'hip_joint_ext_muscle' in muscle:        act_mid[muscle] = -95
         elif 'hip_joint_flx_muscle' in muscle:        act_mid[muscle] = -95
@@ -939,8 +945,6 @@ def run_sims(dt,
         elif 'wrist_joint_ext_muscle' in muscle:      act_mid[muscle] = -95
         elif 'wrist_joint_flx_muscle' in muscle:      act_mid[muscle] = -95
 
-    # --- Motoneuron Properties ---
-    act_bandwidth = {name: 1.0 for name in muscles_list}
     for muscle in muscles_list:
         if   'hip_joint_ext_muscle' in muscle:        act_bandwidth[muscle] = 10
         elif 'hip_joint_flx_muscle' in muscle:        act_bandwidth[muscle] = 10
@@ -955,17 +959,23 @@ def run_sims(dt,
         elif 'wrist_joint_ext_muscle' in muscle:      act_bandwidth[muscle] = 10
         elif 'wrist_joint_flx_muscle' in muscle:      act_bandwidth[muscle] = 10
 
-    # --- Muscle Properties ---
     if muscle_mutt:
+        # DATA STRUCTURES for muscle state (based on potentiometer and pressure sensor data)
+        # This looks more confusing, than the previous data structures, but it is more of the same.
+
+        # Data structures which contain "np.zeros(num_comms)" record data at every time step
         joint_ang  = {key: np.zeros(num_comms) for key in joint_list}
         muscle_len = {key: np.zeros(num_comms) for key in muscles_list}
         muscle_vel = {key: np.zeros(num_comms) for key in muscles_list}
         muscle_ten = {key: np.zeros(num_comms) for key in muscles_list}
 
+        # Data structres which contain a single value or pair of values are static throughout the simulation
         muscle_origin           = {name: [0,0] for name in muscles_list}
         muscle_wrap             = {name: [0,0] for name in muscles_list}
         joint_offset            = {name: [0,0] for name in muscles_list}
-        muscle_insertion   = {name: [0,0] for name in muscles_list}
+        muscle_insertion        = {name: [0,0] for name in muscles_list}
+
+        # Fill in placeholder data with actual measured values from Muscle Mutt
         for muscle in muscles_list:
             if   'hip_joint_ext_muscle' in muscle:        
                 muscle_origin[muscle]               = [-0.083,  0.037]
@@ -1028,6 +1038,8 @@ def run_sims(dt,
                 joint_offset[muscle]                = [0,      -0.2125]
                 muscle_insertion[muscle]  = [0.0075, -0.015+joint_offset[muscle][1]]
 
+        # Static data structures for M and Slist, used in the forward kinematics calculation
+        # of the dynamic muscle length.
         M     = {name: np.array([[0,0,0,0],
                                 [0,0,0,0],
                                 [0,0,0,0],
@@ -1043,8 +1055,6 @@ def run_sims(dt,
                                       [0,1,0,muscle_insertion[muscle][1]],
                                       [0,0,1,0],
                                       [0,0,0,1]])
-            # Revolute about z through q = (qx, qy, 0)
-                # w = [0,0,1]; v = -w x q = [ qy, -qx, 0 ]
                 qx = float(joint_offset[muscle][0])
                 qy = float(joint_offset[muscle][1])
                 Slist[muscle] = np.array([[0.0],
@@ -1055,7 +1065,6 @@ def run_sims(dt,
                                            [0.0]])
 
 
-        muscle_insertion_rest_polar = {name: [0,0] for name in muscles_list} # muscle insertion point in polar coordinates
         muscle_length_static        = {name: 0.0 for name in muscles_list} # length of the static portion
         muscle_length_dynamic       = {name: 0.0 for name in muscles_list} # length of the static portion
 
@@ -1141,8 +1150,6 @@ def run_sims(dt,
         plt.figure()
         plt.imshow(sns_model.g_max_non)
 
-
-
     mn_indices = {}
     for ind, name in enumerate(muscles_list):
         if ind < 6:
@@ -1190,7 +1197,7 @@ def run_sims(dt,
         time_sns += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
 
-        # --- Convert SNS output to spiking inputs ---
+        # Convert SNS output to spiking inputs ---
         for muscle in muscle_indices.keys():
             spk_inputs[muscle_indices[muscle]] = non_to_spk(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_mid[muscle], bandwidth=act_bandwidth[muscle])
         sns_spk_data[i, :] = spk_model(x=spk_inputs)
@@ -1198,32 +1205,33 @@ def run_sims(dt,
         time_spk += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
 
-        # --- Hardware Communication: Muscle Mutt ---
+        # Hardware Communication: Muscle Mutt ---
         if muscle_mutt:
             # Accumulate spikes for next comm event
             if np.any(spikes_raw): 
                 spk_packet = spk_packet | spikes_raw
 
             # At comm interval, send spikes and receive sensory data
-            if i * dt >= comm_index * comm_dt:               
+            if i * dt >= comm_index * comm_dt:
+                # These limb arrays are able to isolate the hind/fore limbs (or any other set of limbs, depending on the configuration).               
                 # limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
                 # limbs  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
-                limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
+                limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #alllimbs
                 spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
-                # Wait for real time to match simulation
+
                 time_now = clock.perf_counter()
                 while time_now < dt * i + time_start:
                     time_sleep = ((dt * i + time_start) - time_now) * 0.9
                     clock.sleep(max(0.0001, time_sleep))
                     time_now = clock.perf_counter()
-                # Send spikes
+                # Send spikes to Muscle Mutt
                 for byte in spk_msg_in_bytes:
                     spike_port.write(bytes([byte]))
                 clock.sleep(0.000001)
                 spk_confirmation = np.frombuffer(spike_port.read(4), dtype=np.uint8)
                 spk_packet = np.zeros_like(spk_packet, dtype=bool)
-                # Get sensory data
+                # Get sensory data from Muscle Mutt.
                 sense_port.write(bytearray([255]))
                 for joint in potentiometer_data.keys():
                     if 'L_' in joint:
@@ -1233,14 +1241,13 @@ def run_sims(dt,
                 for muscle in pressure_sensor_data.keys():
                     pressure_sensor_data[muscle][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
 
-                #  joint/muscle value calculation
+                # joint/muscle value calculation
                 muscle_data(
                     pressure_sensor_data=pressure_sensor_data,
                     potentiometer_data=potentiometer_data,
                     muscle_length_static=muscle_length_static,
                     muscle_length_dynamic=muscle_length_dynamic,
                     muscle_wrap=muscle_wrap,
-                    muscle_insertion_rest_polar=muscle_insertion_rest_polar,
                     M=M,
                     Slist=Slist,
                     joint_ang=joint_ang,
@@ -1385,9 +1392,15 @@ def main():
     dat_thread: handles data receiving and sending between the simulation and Teensy
     """
 
-    feed_fwd    = False
-    muscle_mutt = False
-    make_vid    = True
+    feed_fwd    = False  # If true : runs in feedforward mode (no feedback to SNS)
+                         # If false: operates with feedback to SNS
+    muscle_mutt = False  # If true : configured for communication to Muscle Mutt robot
+                         # If false: configured for communication to MuJoCo Model
+    
+    if not muscle_mutt:  # If true: generate video of MuJoCo simulation
+        make_vid = True
+    else:
+        make_vid = False
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data

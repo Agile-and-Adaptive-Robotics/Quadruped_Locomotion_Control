@@ -1,10 +1,123 @@
  # Quadruped_Locomotion_Control
 A comprehensive repository for controlling locomotion in the AARL's "Muscle Mutt", detailed in the "Quadruped_Robot" repository. The SNS is based on work by Clayton Jackson, and the communication protocol is grounded in work by Stu McNeal.
 
+## Assumptions 
+
+(Even though if we "ass-u-me", we make an a** of u and me).
+
+This README assumes that you have a functioning virtual environment configured that this codebase can run in. This is an environment with SNS-Toolbox, MuJoCo, Scipy, and a handful of other packages and libraries. In addition, this README assumes that you are working in VSCode. While I am sure you could run in a different IDE, VSCode is super rad.
+
+## How to run the simulation
+
+Open the entire repository in VS Code! First, ``ctrl-O ``, then select "Quadruped_Locomotion_Control" from the PC. Once VS Code has opened the repository, activate your terminal (``ctrl ^`` in Windows, I think). You should see
+
+```
+(base) yourname@your name Quadruped_Locomotion_Control %
+```
+
+Again, this assume that you are working in the virtual environment I, so conveniently, set up on the Windows computer. If this is the case, you should be able to enter the proper environment (sns-env) using conda:
+
+```
+(base) yourname@your name Quadruped_Locomotion_Control % conda activate sns-env
+(sns-env) yourname@your name Quadruped_Locomotion_Control %
+```
+
+To run the simulation as-is, simply execute dog_sitter.py in Python from within your virtual environment using the relative path to the dog_sitter.py script:
+
+```
+(sns-env) yourname@your name Quadruped_Locomotion_Control % Python "Python/dog_sitter.py"
+```
+
+In the base configuration, the simulation runs in the virtual world. It should work for 30 seconds or so, depending on what PC you are running on and end by printing something along the lines of
+
+```
+ ... SNS plots created
+... SPK plots created
+
+ Print-to-Terminal Time:           0.0042
+SNS-Toolox Time:                  11.2376
+SNS-Toolox Spk Time:              1.9752
+Add-to-Spike Queue Time:          0.004
+MuJoCo Time:                      4.1968
+Feedback Processing Time:         0.1925
+Video Creation Time:              23.5057
+Total Loop Time:                  41.116
+Total Loop Time (check):          41.1368
+
+ ... Simulation and Storage Complete
+ ```
+This summarizes generally how you can run the simulation, but does not detail the inner workings of the code, if you want to change something. The next sections will delve into this, starting with the "wrapper" code, dog_sitter.py.
+
+## dog_sitter.py
+
+Dog sitter the main piece of code in this work. It handles the synthetic nervous system, and also communicates data to MuJoCo or Muscle Mutt itself. It also stores all simulation data in dictionaries, and then packages them into directories at the end of simulation.
+
+I will break these down, starting with the most top-level function, main(). I will then work describe the sub-functions starting with the most broad and ending with the most granular.
+
+### main()
+
+To configure this file, open [dog_sitter.py](Python/dog_sitter.py) and navigate to the very bottom of the file to the main() function. Starting here, you can set parameters for the simulation time step, communication frequency, and SNS network parameters. However, most importantly, this is where you can chose whether the SNS operates with feedback. Here, you can also determine whether you are controlling Muscle Mutt (the robot) or the virtual model of Muscle Mutt in MuJoCo.
+
+```
+feed_fwd    = Boolean  # If true : runs in feedforward mode (no feedback to SNS)
+                       # If false: operates with feedback to SNS
+muscle_mutt = Boolean  # If true : configured for communication to Muscle Mutt robot
+                       # If false: configured for communication to MuJoCo Model
+```
+
+Look through this section, it is well-commented!
+
+### run_sim()
+
+First, data structures are initialized for *communication frequency* and *time*.
+
+```
+    comm_dt    = 1 / comm_freq       # Communication period (s)
+    comm_index = 0               # Communication event counter
+    ...
+```
+
+Then, the SNS and MuJoCo models are initialized. The MuJoCo model is always initialized, even if it is not simulated, this way we can pull object indices for the joints and muscle.
+
+```
+    mujoco_dt = dt 
+    sns_dt = mujoco_dt * 1000
+    mujoco_sim, mujoco_data = mujoco_model(xml_path)
+    ...
+```
+
+Then, we initialize a BUNCH of data structures for all the motoneuron, muscle, and joint data to be used throughout the simulation. This looks a little messy, but it is *so helpful* to be able to reference all data with **keys** throughout simulation and plotting.
+
+Data structures are initialized depending on the type of data to be stored (whether values are recorded every timestep, etc.). Read through this section! It's well-commented! They are either in this format, where data can be stored at each timesetep:
+```
+joint_ang  = {key: np.zeros(num_comms) for key in joint_list}
+```
+... or as single values for each index, which remain static throughout the simulation:
+```
+joint_offset = {name: [0,0] for name in muscles_list}
+```
+### for i in range(1, num_steps):
+
+Now we arrive at the real simulation loop, which steps based on the defined simulation step size. The first thing to note is that, throughout, there are simulation time markers to make now much time each process takes in the simulation loop. They look like this:
+```
+        time_print += clock.perf_counter() - time_mark
+        time_mark  = clock.perf_counter()
+```
+
+This section is pretty well-commented, so just read through it and let me know if you have questions!
+
+Note that spikes are accumulated at every simulation time step and then sent over serial at every communication time step.
+
+### Plotting
+
+There's a lot of plotting stuff that goes on! First, data is immediately plotted in ``plot_legs_master_summary()`` after the simulation is run. It is also stored into the ``data`` directory, where it can later be plotted using ``data_processing.py`` (this is how I generated the plots for my thesis).  
+
+<!-- 
+
 # System Overview
 
 
-It is fairly complicated to generate stable locomotion in a quadrupedal robot, and doing so with spike activations to BPAs is a novel method.
+It is fairly complicated to generate stable locomotion in a quadrupedal robot, and doing so with spike activations to BkPAs is a novel method.
 In addition, neural systems are notoriously difficult to tune; though, when done so properly, they can be a robust control method.
 
 This work bridges the gap between a synthetic nervous system, tuned to generate stable walking in the hind limbs of a rat model, and a quadruped robot.
@@ -108,4 +221,4 @@ However, this reference depends on my configuration of the project within the VS
 
 Likewise, the actual Teensy port names depend exclusively on the device to which they are attached.
 These can be found by connecting the Teensy microcontrollers in their ultimate configuration and reading the port names from the Arduino IDE.
- 
+  -->
