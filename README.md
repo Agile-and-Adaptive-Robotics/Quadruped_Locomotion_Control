@@ -96,7 +96,7 @@ joint_ang  = {key: np.zeros(num_comms) for key in joint_list}
 ```
 joint_offset = {name: [0,0] for name in muscles_list}
 ```
-### for i in range(1, num_steps):
+#### for i in range(1, num_steps):
 
 Now we arrive at the real simulation loop, which steps based on the defined simulation step size. The first thing to note is that, throughout, there are simulation time markers to make now much time each process takes in the simulation loop. They look like this:
 ```
