@@ -734,7 +734,7 @@ def non_to_spk(x,half_point,bandwidth):
     steepness = 10/bandwidth
     y_offset = 0.01
     x_offset = half_point
-    amp = 2
+    amp = 2.5
     y = amp/(1 + np.exp(steepness*(x_offset-x))) + y_offset
 
     return min(max(y, 0), amp)
@@ -1216,7 +1216,8 @@ def run_sims(dt,
                 # These limb arrays are able to isolate the hind/fore limbs (or any other set of limbs, depending on the configuration).               
                 # limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
                 # limbs  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
-                limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #alllimbs
+                limbs    = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #alllimbs
+                limbs    = np.array([1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #alllimbs
                 spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
 
@@ -1411,7 +1412,7 @@ def main():
     #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
     cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 20    # simulation end seconds
+    end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
