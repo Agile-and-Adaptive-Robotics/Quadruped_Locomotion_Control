@@ -38,15 +38,15 @@ int pin_valve_kneeLFL     = 35;
 int pin_valve_ankleLEX    = 33;
 int pin_valve_ankleLFL    = 34;
 
-int pin_valve_scapulaREX  = 25;
-int pin_valve_scapulaRFL  = 26;
+int pin_valve_scapulaREX  = 26;
+int pin_valve_scapulaRFL  = 25;
 int pin_valve_shoulderREX = 8;
 int pin_valve_shoulderRFL = 9;
 int pin_valve_wristREX    = 7;
 int pin_valve_wristRFL    = 6;
 
-int pin_valve_scapulaLEX  = 31;
-int pin_valve_scapulaLFL  = 32;
+int pin_valve_scapulaLEX  = 32;
+int pin_valve_scapulaLFL  = 31;
 int pin_valve_shoulderLEX = 2;
 int pin_valve_shoulderLFL = 3;
 int pin_valve_wristLEX    = 1;

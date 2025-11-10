@@ -20,7 +20,7 @@ import time as clock
 import time as world_clock
 import numpy as np
 # import pandas as pd
-# import modern_robotics as mr  # MJL: I HAVE TO COMMENT THIS OUT ON MY LAPTOP
+import modern_robotics as mr  # MJL: I HAVE TO COMMENT THIS OUT ON MY LAPTOP
 import mujoco
 import mujoco.viewer
 import mediapy as media
@@ -73,6 +73,10 @@ def plot_sns(time, data):
     Plot left/right muscle activities for all limbs (SNS output).
     6x2 grid: each row = muscle group, columns = extensor/flexor.
 
+    
+                       Right Side
+                       0 - hip mn ext
+                       1 - hip mn flx
                        2 - knee mn ext
                        3 - knee mn flx
                        4 - ankle mn ext
@@ -97,6 +101,13 @@ def plot_sns(time, data):
                        21 - hip PF flx
                        22 - KA PF ext
                        23 - KA PF flx
+
+                       ext = extensor
+                       flx = flexor
+                       mn = motor neuron
+                       RG = rhythm generator
+                       PF = pattern former
+                       KA = knee ankle
 
     Returns:
     None
@@ -726,7 +737,7 @@ def stim_to_act(stim):
     return min(max(act, 0), 1)
 
 
-def non_to_spk(x,half_point,bandwidth):
+def spike_TF(x,half_point,bandwidth):
     """
     Convert neural potential to muscle activation [0, 1] (spiking version).
     """
@@ -734,7 +745,7 @@ def non_to_spk(x,half_point,bandwidth):
     steepness = 10/bandwidth
     y_offset = 0.01
     x_offset = half_point
-    amp = 2.5
+    amp = 2.0
     y = amp/(1 + np.exp(steepness*(x_offset-x))) + y_offset
 
     return min(max(y, 0), amp)
@@ -975,7 +986,7 @@ def run_sims(dt,
         joint_offset            = {name: [0,0] for name in muscles_list}
         muscle_insertion        = {name: [0,0] for name in muscles_list}
 
-        # Fill in placeholder data with actual measured values from Muscle Mutt
+        # replace placeholder data with actual measured values from Muscle Mutt
         for muscle in muscles_list:
             if   'hip_joint_ext_muscle' in muscle:        
                 muscle_origin[muscle]               = [-0.083,  0.037]
@@ -1199,8 +1210,12 @@ def run_sims(dt,
 
         # Convert SNS output to spiking inputs ---
         for muscle in muscle_indices.keys():
-            spk_inputs[muscle_indices[muscle]] = non_to_spk(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_mid[muscle], bandwidth=act_bandwidth[muscle])
+            spk_inputs[muscle_indices[muscle]] = spike_TF(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_mid[muscle], bandwidth=act_bandwidth[muscle])
         sns_spk_data[i, :] = spk_model(x=spk_inputs)
+        
+        # print((sns_spk_data[i, :]))
+        # spikes_raw = np.concatenate((np.array(sns_spk_data[i, 0:12], dtype=bool), np.array(sns_spk_data[i, 0:12], dtype=bool)))
+        # print((spikes_raw))
         spikes_raw = np.array(sns_spk_data[i, :], dtype=bool)
         time_spk += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
@@ -1215,23 +1230,30 @@ def run_sims(dt,
             if i * dt >= comm_index * comm_dt:
                 # These limb arrays are able to isolate the hind/fore limbs (or any other set of limbs, depending on the configuration).               
                 # limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
+                # limbs  = np.array([1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) 
+                # limbs    = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0], dtype=bool) 
                 # limbs  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
                 limbs    = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #alllimbs
-                limbs    = np.array([1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #alllimbs
+                # limbs    = np.array([1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], dtype=bool)
                 spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
 
+                # This function pauses the loop to wait for real time to catch up
+                # to simulation time.
                 time_now = clock.perf_counter()
                 while time_now < dt * i + time_start:
                     time_sleep = ((dt * i + time_start) - time_now) * 0.9
                     clock.sleep(max(0.0001, time_sleep))
                     time_now = clock.perf_counter()
-                # Send spikes to Muscle Mutt
+
+                # When the real time and simulation time meet, the spike package
+                # is sent to Muscle Mutt. 
                 for byte in spk_msg_in_bytes:
                     spike_port.write(bytes([byte]))
                 clock.sleep(0.000001)
                 spk_confirmation = np.frombuffer(spike_port.read(4), dtype=np.uint8)
                 spk_packet = np.zeros_like(spk_packet, dtype=bool)
+                
                 # Get sensory data from Muscle Mutt.
                 sense_port.write(bytearray([255]))
                 for joint in potentiometer_data.keys():
@@ -1395,7 +1417,7 @@ def main():
 
     feed_fwd    = False  # If true : runs in feedforward mode (no feedback to SNS)
                          # If false: operates with feedback to SNS
-    muscle_mutt = False  # If true : configured for communication to Muscle Mutt robot
+    muscle_mutt = True  # If true : configured for communication to Muscle Mutt robot
                          # If false: configured for communication to MuJoCo Model
     
     if not muscle_mutt:  # If true: generate video of MuJoCo simulation
@@ -1412,7 +1434,7 @@ def main():
     #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
     cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 5    # simulation end seconds
+    end_time = 30    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 

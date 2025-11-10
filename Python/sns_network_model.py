@@ -483,7 +483,7 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
 
     hindlimb_net = build_hindlimbs(cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
     forelimb_net = build_forelimbs(cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
-    hindlimb_false = build_hindlimbs(cpg_gsyn = 0)
+    # hindlimb_false = build_hindlimbs(cpg_gsyn = 0)
 
     whole_net.add_network(hindlimb_net, suffix='_hi_R')
     whole_net.add_input('RG_HC_ext_hi_R')
