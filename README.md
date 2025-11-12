@@ -127,6 +127,8 @@ The RG half centers are non-spiking neurons with persistent sodium channels. In 
 * $I_{ion}$ = $\sum_j [Gj * A_{inf,j}^{P_a} * B_j^{P_b} * C_j^{P_c} * (E_j - V)]$
 * $I_{ion}$ = $\sum_j [Gj * m_{inf,j}^{P_m} * h_j^{P_h} * (E_j - U)]$
 
+Decreasing the membrane capacitance also seems to simply increase the amplitude of oscillations, as well as increasing (tau_max), which for some reason changes non-spiking neuron behavior.
+
 <!-- 
 
 # System Overview

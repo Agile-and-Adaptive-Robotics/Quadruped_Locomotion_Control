@@ -93,7 +93,7 @@ def build_hindlimbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     else:
         MN_mag = 1
 
-    Cm = Cm
+    Cm = 5
     Gm = 1
     Ena = 50
     Er = -60
@@ -282,7 +282,7 @@ def build_forelimbs(Cm, cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
     else:
         MN_mag = 1
 
-    Cm = Cm
+    Cm = 5
     Gm = 1
     Ena = 50
     Er = -60
