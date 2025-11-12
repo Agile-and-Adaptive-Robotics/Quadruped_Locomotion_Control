@@ -84,7 +84,7 @@ class MotorCircuit(Network): # Note that this network is also a preset available
         self.add_output('MN_ext')
         self.add_output('MN_flx')
 
-def build_hindlimbs(cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
+def build_hindlimbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
 
     net = Network('Kaiyu_2layehi_Rndlimb')
 
@@ -93,7 +93,7 @@ def build_hindlimbs(cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     else:
         MN_mag = 1
 
-    Cm = 5
+    Cm = Cm
     Gm = 1
     Ena = 50
     Er = -60
@@ -125,6 +125,15 @@ def build_hindlimbs(cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
                                                                 k_m=k_m,slope_m=slope_m,e_m=e_m,
                                                                 k_h=k_h,slope_h=slope_h,e_h=e_h,tau_max_h=tau_max_h,
                                                                 name='HC',color='orange', resting_potential=Er , bias = 0.0)
+    
+    # # # defining cpg neurons    
+    # # Cm = 20
+    # # tau_max_h = [500] # Slow DOOOOOWN RG 
+    # RG_HC_neuron = NonSpikingNeuronWithPersistentSodiumChannel(membrane_capacitance=Cm, membrane_conductance=Gm,
+    #                                                             g_ion=g_ion,e_ion=e_ion,
+    #                                                             k_m=k_m,slope_m=slope_m,e_m=e_m,
+    #                                                             k_h=k_h,slope_h=slope_h,e_h=e_h,tau_max_h=tau_max_h,
+    #                                                             name='HC',color='orange', resting_potential=Er , bias = 0.0)
     
     interneuron = NonSpikingNeuron(membrane_capacitance=Cm, membrane_conductance=Gm, resting_potential=Er, name='IN', color='blue')
 
@@ -264,7 +273,7 @@ def build_hindlimbs(cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
 
     return net
 
-def build_forelimbs(cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
+def build_forelimbs(Cm, cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
 
     net = Network('Kaiyu_2layehi_Rndlimb')
 
@@ -273,7 +282,7 @@ def build_forelimbs(cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
     else:
         MN_mag = 1
 
-    Cm = 5
+    Cm = Cm
     Gm = 1
     Ena = 50
     Er = -60
@@ -445,14 +454,14 @@ def build_forelimbs(cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
     return net
 
 
-def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True): 
+def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True): 
 
-    if feed_forward == True:
-        RG_mag = 2
-    else:
-        RG_mag = 1
+    # if feed_forward == True:
+    #     RG_mag = 2
+    # else:
+    #     RG_mag = 1
 
-    Cm = 5
+    Cm = Cm
     Gm = 1
     Ena = 50
     Er = -60
@@ -481,8 +490,8 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
 
     whole_net = Network('hindlimbs')
 
-    hindlimb_net = build_hindlimbs(cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
-    forelimb_net = build_forelimbs(cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
+    hindlimb_net = build_hindlimbs(Cm=Cm, cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
+    forelimb_net = build_forelimbs(Cm=Cm, cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
     # hindlimb_false = build_hindlimbs(cpg_gsyn = 0)
 
     whole_net.add_network(hindlimb_net, suffix='_hi_R')
@@ -496,17 +505,18 @@ def build_net(cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True
     whole_net.add_network(forelimb_net, suffix='_fo_L')
     whole_net.add_input('RG_HC_flx_fo_L')
 
+    RG_adjust = 1
 
     # Based on Rybak
     base_neuron = NonSpikingNeuron(color='yellow', membrane_capacitance=5.0, membrane_conductance=1, resting_potential=-60)
 
-    exc_2_5     = NonSpikingSynapse(max_conductance=1.00*0.15*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60) # directly proportional to the period
-    exc_1_0     = NonSpikingSynapse(max_conductance=0.25*0.15*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60) # no impact, other synapse in link is too weak
-    exc_0_3     = NonSpikingSynapse(max_conductance=0.0638*0.15*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60) # inversely proportional to the period. small change has big impact
-    inh_6_0     = NonSpikingSynapse(max_conductance=2.0*0.075*RG_mag, reversal_potential=-100, e_hi=-40, e_lo=-60) # inversely proportional to the period
-    exc_0_1_flx = NonSpikingSynapse(max_conductance=0.0204*0.15*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60) # increased period. larger impact on ext period. later coupling effect. 
-    exc_0_1_ext = NonSpikingSynapse(max_conductance=0.0204*0.15*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60) # Proportional to the period
-    exc_1_5     = NonSpikingSynapse(max_conductance=0.4286*0.75*RG_mag, reversal_potential=0, e_hi=-40, e_lo=-60)  # inversely proportional to the period
+    exc_2_5     = NonSpikingSynapse(max_conductance=1.00*0.15*RG_adjust, reversal_potential=0, e_hi=-40, e_lo=-60) # directly proportional to the period
+    exc_1_0     = NonSpikingSynapse(max_conductance=0.25*0.15*RG_adjust, reversal_potential=0, e_hi=-40, e_lo=-60) # no impact, other synapse in link is too weak
+    exc_0_3     = NonSpikingSynapse(max_conductance=0.0638*0.15*RG_adjust, reversal_potential=0, e_hi=-40, e_lo=-60) # inversely proportional to the period. small change has big impact
+    inh_6_0     = NonSpikingSynapse(max_conductance=2.0*0.075*RG_adjust, reversal_potential=-100, e_hi=-40, e_lo=-60) # inversely proportional to the period
+    exc_0_1_flx = NonSpikingSynapse(max_conductance=0.0204*0.15*RG_adjust, reversal_potential=0, e_hi=-40, e_lo=-60) # increased period. larger impact on ext period. later coupling effect. 
+    exc_0_1_ext = NonSpikingSynapse(max_conductance=0.0204*0.15*RG_adjust, reversal_potential=0, e_hi=-40, e_lo=-60) # Proportional to the period
+    exc_1_5     = NonSpikingSynapse(max_conductance=0.4286*0.75*RG_adjust, reversal_potential=0, e_hi=-40, e_lo=-60)  # inversely proportional to the period
 
     """
     LEFT AND RIGHT LIMB RHYTHM GENERATOR NETWORK CONNECTIONS

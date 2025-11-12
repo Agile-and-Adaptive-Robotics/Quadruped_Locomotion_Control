@@ -112,6 +112,21 @@ Note that spikes are accumulated at every simulation time step and then sent ove
 
 There's a lot of plotting stuff that goes on! First, data is immediately plotted in ``plot_legs_master_summary()`` after the simulation is run. It is also stored into the ``data`` directory, where it can later be plotted using ``data_processing.py`` (this is how I generated the plots for my thesis).  
 
+# Adjust walking speed
+
+I want to slow down Muscle Mutt's walking speed. To do this, I want to find a parameter in the Rhythm Generating (RG) network which will create slow, controlled activations in the RG half centers.
+
+The RG half centers are non-spiking neurons with persistent sodium channels. In SNS-Toolbox, these have the following parameters:
+
+* **name** (*str, optional*) – Name of this neuron preset, default is ‘Neuron’.
+* **color** (*str, optional*) – Background fill color for the neuron, default is ‘white’.
+* **membrane_capacitance** (*Number, optional*) – Neural membrane capacitance, default is 5.0. Units are nanofarads (nF).
+* **membrane_conductance** (*Number, optional*) – Neural membrane conductance, default is 1.0. Units are microsiemens (uS).
+* **resting_potential** (*Number, optional*) – Neural resting potential, default is 0.0. Units are millivolts (mV).
+* **bias** (*Number, optional*) – Internal bias current, default is 0.0. Units are nanoamps (nA).
+* $I_{ion}$ = $\sum_j [Gj * A_{inf,j}^{P_a} * B_j^{P_b} * C_j^{P_c} * (E_j - V)]$
+* $I_{ion}$ = $\sum_j [Gj * m_{inf,j}^{P_m} * h_j^{P_h} * (E_j - U)]$
+
 <!-- 
 
 # System Overview

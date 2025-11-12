@@ -20,7 +20,7 @@ import time as clock
 import time as world_clock
 import numpy as np
 # import pandas as pd
-import modern_robotics as mr  # MJL: I HAVE TO COMMENT THIS OUT ON MY LAPTOP
+# import modern_robotics as mr  # MJL: I HAVE TO COMMENT THIS OUT ON MY LAPTOP
 import mujoco
 import mujoco.viewer
 import mediapy as media
@@ -857,6 +857,7 @@ def run_sims(dt,
              num_comms,
              xml_path, 
              cpg_inputs, 
+             Cm = 5,
              cpg_gsyn=1.49167, 
              feed_forward=True,
              muscle_mutt=False,
@@ -904,7 +905,7 @@ def run_sims(dt,
     sns_dt = mujoco_dt * 1000
     mujoco_sim, mujoco_data = mujoco_model(xml_path)
     mujoco_sim.opt.timestep = mujoco_dt
-    sns_model = build_net(dt=sns_dt, cpg_gsyn=cpg_gsyn, feed_forward=feed_forward)
+    sns_model = build_net(dt=sns_dt, Cm=Cm, cpg_gsyn=cpg_gsyn, feed_forward=feed_forward)
     spk_model = spike_net(dt=sns_dt) # Nonspiking to spiking conversion network
 
     # ----------- DATA STRUCTURES ----------- 
@@ -1417,7 +1418,7 @@ def main():
 
     feed_fwd    = False  # If true : runs in feedforward mode (no feedback to SNS)
                          # If false: operates with feedback to SNS
-    muscle_mutt = True  # If true : configured for communication to Muscle Mutt robot
+    muscle_mutt = False  # If true : configured for communication to Muscle Mutt robot
                          # If false: configured for communication to MuJoCo Model
     
     if not muscle_mutt:  # If true: generate video of MuJoCo simulation
@@ -1433,8 +1434,9 @@ def main():
     # else:
     #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
-    cpg_gsyn = 1.49167  # defines RG oscillation speed (small adjustments make a big difference!)
-    end_time = 30    # simulation end seconds
+    cpg_gsyn = 1.49167  # RG oscillation AMPLITUDE (small adjustments make a big difference!)
+    mem_cap =  10       # RG oscillation PHASE (membrane capacitance of HC neurons)
+    end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
@@ -1451,6 +1453,7 @@ def main():
                     num_comms=num_comms,
                     xml_path=xml_path, 
                     cpg_inputs=cpg_inputs, 
+                    Cm = mem_cap,
                     cpg_gsyn=cpg_gsyn, 
                     feed_forward=feed_fwd,
                     muscle_mutt=muscle_mutt,
