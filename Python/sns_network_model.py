@@ -84,7 +84,7 @@ class MotorCircuit(Network): # Note that this network is also a preset available
         self.add_output('MN_ext')
         self.add_output('MN_flx')
 
-def build_hindlimbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
+def build_limbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
 
     net = Network('Kaiyu_2layehi_Rndlimb')
 
@@ -271,188 +271,71 @@ def build_hindlimbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     net.add_output('KA_PF_HC_ext')
     net.add_output('KA_PF_HC_flx')
 
-    return net
-
-def build_forelimbs(Cm, cpg_gsyn=1.49167, dt=0.01, feed_forward=True):
-
-    net = Network('Kaiyu_2layehi_Rndlimb')
-
-    if feed_forward == True:
-        MN_mag = 2
-    else:
-        MN_mag = 1
-
-    Cm = 5
-    Gm = 1
-    Ena = 50
-    Er = -60
-    Sm = 0.2
-    Sh = -0.6
-    delEna = Ena
-    Km = 1
-    Kh = 0.5
-    Em = -40
-    Eh = -60
-    delEm = Em
-    delEh = Eh
-    tauHmax = 500
-    Gna = 1.5
-    # reformat for sns-toolbox
-    g_ion = [Gna]
-    e_ion = [delEna]
-    k_m = [Km]
-    slope_m = [Sm]
-    e_m = [delEm]
-    k_h = [Kh]
-    slope_h = [Sh]
-    e_h = [delEh]
-    tau_max_h = [tauHmax]
-
-    # defining cpg neurons    
-    HC_neuron = NonSpikingNeuronWithPersistentSodiumChannel(membrane_capacitance=Cm, membrane_conductance=Gm,
-                                                                g_ion=g_ion,e_ion=e_ion,
-                                                                k_m=k_m,slope_m=slope_m,e_m=e_m,
-                                                                k_h=k_h,slope_h=slope_h,e_h=e_h,tau_max_h=tau_max_h,
-                                                                name='HC',color='orange', resting_potential=Er , bias = 0.0)
-    
-    interneuron = NonSpikingNeuron(membrane_capacitance=Cm, membrane_conductance=Gm, resting_potential=Er, name='IN', color='blue')
-
-    #define cpg synapses
-    HC2IN = NonSpikingSynapse(max_conductance=cpg_gsyn, reversal_potential= -40, e_hi = -40, e_lo = -60)
-    IN2HC = NonSpikingSynapse(max_conductance=cpg_gsyn, reversal_potential= -70, e_hi = -40, e_lo = -60)
-    
-    #add the RG neurons
-    net.add_neuron(HC_neuron, 'RG_HC_ext')
-    net.add_neuron(HC_neuron, 'RG_HC_flx')
-    net.add_neuron(interneuron, 'RG_IN_ext')
-    net.add_neuron(interneuron, 'RG_IN_flx')
-
-    #connect the RG
-    net.add_connection(HC2IN, 'RG_HC_ext', 'RG_IN_ext')
-    net.add_connection(HC2IN, 'RG_HC_flx', 'RG_IN_flx')
-    net.add_connection(IN2HC, 'RG_IN_ext', 'RG_HC_flx')
-    net.add_connection(IN2HC, 'RG_IN_flx', 'RG_HC_ext')
-    # net.add_connection(Gw, 'RG_HC_ext', 'RG_HC_flx')
-    # net.add_connection(Gw, 'RG_HC_flx', 'RG_HC_ext')
-    
-    #add the hip PF layer
-    net.add_neuron(HC_neuron, 'PF_HC_ext_Hip')
-    net.add_neuron(HC_neuron, 'PF_HC_flx_Hip')
-    net.add_neuron(interneuron, 'PF_IN_ext_Hip')
-    net.add_neuron(interneuron, 'PF_IN_flx_Hip')
-
-    #connect the Hip_PF
-    net.add_connection(HC2IN, 'PF_HC_ext_Hip', 'PF_IN_ext_Hip')
-    net.add_connection(HC2IN, 'PF_HC_flx_Hip', 'PF_IN_flx_Hip')
-    net.add_connection(IN2HC, 'PF_IN_ext_Hip', 'PF_HC_flx_Hip')
-    net.add_connection(IN2HC, 'PF_IN_flx_Hip', 'PF_HC_ext_Hip')
-
-    #add the knee&ankle PF layer
-    net.add_neuron(HC_neuron, 'KA_PF_HC_ext')
-    net.add_neuron(HC_neuron, 'KA_PF_HC_flx')
-    net.add_neuron(interneuron, 'KA_PF_IN_ext')
-    net.add_neuron(interneuron, 'KA_PF_IN_flx')
-
-    #connect the KA_PF
-    net.add_connection(HC2IN, 'KA_PF_HC_ext', 'KA_PF_IN_ext')
-    net.add_connection(HC2IN, 'KA_PF_HC_flx', 'KA_PF_IN_flx')
-    net.add_connection(IN2HC, 'KA_PF_IN_ext', 'KA_PF_HC_flx')
-    net.add_connection(IN2HC, 'KA_PF_IN_flx', 'KA_PF_HC_ext')
-
-    # RG -> PF
-    RG2PF_hip = NonSpikingSynapse(max_conductance=1.0,  reversal_potential=-40, e_hi=-40, e_lo=-59)
-    RG2PF_KA = NonSpikingSynapse(max_conductance=0.8, reversal_potential=-40, e_hi=-40, e_lo=-59)
-    
-    net.add_connection(RG2PF_hip, 'RG_HC_ext', 'PF_HC_ext_Hip')
-    net.add_connection(RG2PF_hip, 'RG_HC_flx', 'PF_HC_flx_Hip')
-    net.add_connection(RG2PF_KA, 'RG_HC_ext', 'KA_PF_HC_ext')
-    net.add_connection(RG2PF_KA, 'RG_HC_flx', 'KA_PF_HC_flx')
-
-    #add the motor circuits
-    motor_circuit = MotorCircuit()
-
-    net.add_network(motor_circuit, suffix='_Hip') 
-    IaIN2MNflx = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)
-    IaIN2MNext = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)
-    net.add_neuron(interneuron, name='II_IN_ext_Hip', color='lightcoral') 
-    net.add_neuron(interneuron, name='II_IN_flx_Hip', color='mediumseagreen') 
-    net.add_input('II_IN_ext_Hip')
-    net.add_input('II_IN_flx_Hip')
-    net.add_connection(IaIN2MNflx, 'IaIN_flx_Hip', 'MN_flx_Hip')
-    net.add_connection(IaIN2MNext, 'IaIN_ext_Hip', 'MN_ext_Hip')
-
-    net.add_network(motor_circuit, suffix='_Knee') 
-    
-    net.add_network(motor_circuit, suffix='_Ankle') 
-    ankle_II_flx2ankleMNflx = NonSpikingSynapse(max_conductance=0.47, reversal_potential=-10, e_hi=-40, e_lo=-60)
-    net.add_neuron(interneuron, 'II_IN_flx_Ankle')
-    net.add_connection(ankle_II_flx2ankleMNflx ,'II_IN_flx_Ankle','MN_flx_Ankle')
-    net.add_input('II_IN_flx_Ankle')
-
-
-    # PF -> Ib IN inhibit
-    pf2Ib = NonSpikingSynapse(max_conductance=2, reversal_potential=-60, e_hi=-59, e_lo=-60)
-
-    net.add_connection(pf2Ib, 'PF_HC_flx_Hip','IbIN_ext_Hip')
-    net.add_connection(pf2Ib, 'PF_HC_ext_Hip','IbIN_flx_Hip')
-    net.add_connection(pf2Ib, 'KA_PF_HC_flx','IbIN_ext_Knee')
-    net.add_connection(pf2Ib, 'KA_PF_HC_ext','IbIN_flx_Knee')
-    net.add_connection(pf2Ib, 'KA_PF_HC_flx','IbIN_ext_Ankle')
-    net.add_connection(pf2Ib, 'KA_PF_HC_ext','IbIN_flx_Ankle')
-
-    # PF -> Motor Circuits
-    PF2Ia = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40, e_hi=-55, e_lo=-60)
-
-    PF2HipMN_ext = NonSpikingSynapse(max_conductance=2.565*0.3*MN_mag, reversal_potential=-10, e_hi=-50, e_lo=-60)
-    PF2HipMN_flx = NonSpikingSynapse(max_conductance=3.632*0.3*MN_mag, reversal_potential=-10, e_hi=-50, e_lo=-60)
-
-    PF2KneeMN_ext = NonSpikingSynapse(max_conductance=2.1*MN_mag, reversal_potential=-40, e_hi=-50, e_lo=-60)
-    PF2KneeMN_flx = NonSpikingSynapse(max_conductance=1.6*MN_mag, reversal_potential=-40, e_hi=-50, e_lo=-60)
-
-    PF2AnkleMN_ext = NonSpikingSynapse(max_conductance=2.7*MN_mag, reversal_potential=-10, e_hi=-50, e_lo=-60)
-    PF2AnkleMN_flx = NonSpikingSynapse(max_conductance=4.4*MN_mag, reversal_potential=-40, e_hi=-50, e_lo=-60)
-    
-    net.add_connection(PF2Ia, 'PF_HC_ext_Hip','Ia_ext_Hip')
-    net.add_connection(PF2Ia, 'PF_HC_flx_Hip','Ia_flx_Hip')
-    net.add_connection(PF2Ia, 'KA_PF_HC_ext','Ia_ext_Knee')
-    net.add_connection(PF2Ia, 'KA_PF_HC_flx','Ia_flx_Knee')
-    net.add_connection(PF2Ia, 'KA_PF_HC_ext','Ia_ext_Ankle')
-    net.add_connection(PF2Ia, 'KA_PF_HC_flx','Ia_flx_Ankle')
-
-    net.add_connection(PF2HipMN_ext, 'PF_HC_ext_Hip','MN_ext_Hip')
-    net.add_connection(PF2HipMN_flx, 'PF_HC_flx_Hip','MN_flx_Hip')
-    net.add_connection(PF2KneeMN_ext, 'KA_PF_HC_ext','MN_ext_Knee')
-    net.add_connection(PF2KneeMN_flx, 'KA_PF_HC_flx','MN_flx_Knee')
-    net.add_connection(PF2AnkleMN_ext, 'KA_PF_HC_ext','MN_ext_Ankle')
-    net.add_connection(PF2AnkleMN_flx, 'KA_PF_HC_flx','MN_flx_Ankle')
-
-    # # feedback to PF and RG layers
-    HipII_flx2RG_IN_ext = NonSpikingSynapse(max_conductance=0.1, reversal_potential=-70, e_hi=-45, e_lo=-60)
-    HipII_ext2RG_IN_flx = NonSpikingSynapse(max_conductance=0.1, reversal_potential=-70, e_hi=-40, e_lo=-55)
-    HipII_flx2Hip_PF_IN_ext = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-70, e_hi=-30, e_lo=-50)
-    HipII_ext2Hip_PF_IN_flx = NonSpikingSynapse(max_conductance=0.2, reversal_potential=-70, e_hi=-30, e_lo=-50)
-    HipII_flx2KA_PF_IN_ext = NonSpikingSynapse(max_conductance=0.2, reversal_potential=-70, e_hi=-35, e_lo=-55)
-    HipII_ext2KA_PF_IN_flx = NonSpikingSynapse(max_conductance=0.8, reversal_potential=-70, e_hi=-40, e_lo=-50)
-    AnkleIb_ext2KA_PF_IN_ext = NonSpikingSynapse(max_conductance=0.1, reversal_potential=-70, e_hi=-45, e_lo=-60)
-
-    net.add_connection(HipII_flx2RG_IN_ext, 'II_IN_flx_Hip','RG_IN_ext')
-    net.add_connection(HipII_ext2RG_IN_flx, 'II_IN_ext_Hip','RG_IN_flx')
-    net.add_connection(HipII_flx2Hip_PF_IN_ext, 'II_IN_flx_Hip', 'PF_IN_ext_Hip')
-    net.add_connection(HipII_ext2Hip_PF_IN_flx, 'II_IN_ext_Hip', 'PF_IN_flx_Hip')
-    net.add_connection(HipII_flx2KA_PF_IN_ext, 'II_IN_flx_Hip', 'KA_PF_IN_ext')
-    net.add_connection(HipII_ext2KA_PF_IN_flx, 'II_IN_ext_Hip', 'KA_PF_IN_flx')
-    net.add_connection(AnkleIb_ext2KA_PF_IN_ext, 'IbIN_ext_Ankle', 'KA_PF_IN_ext')
-
-    net.add_output('RG_HC_ext')
-    net.add_output('RG_HC_flx')
-
-    net.add_output('PF_HC_ext_Hip')
-    net.add_output('PF_HC_flx_Hip')
-    net.add_output('KA_PF_HC_ext')
-    net.add_output('KA_PF_HC_flx')
+    render(net, view=False, save=True, filename='python/fig_networks/jack_motor', img_format='png')
 
     return net
 
+
+def spike_net(dt = 0.01, return_net = False):
+    spike_network = Network('SpikeNet')
+
+    motor_neuron_spk = SpikingNeuron(name='MN_spk', color='yellow', threshold_initial_value = 1, threshold_time_constant = 50, membrane_capacitance = 50)
+
+    spike_network.add_neuron(motor_neuron_spk, name='R_hip_ext_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_hip_flx_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_knee_ext_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_knee_flx_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_ankle_ext_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_ankle_flx_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_hip_ext_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_hip_flx_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_knee_ext_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_knee_flx_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_ankle_ext_muscle', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_ankle_flx_muscle', color='blue')
+
+        ### forelimb hindlimb spiking network
+    spike_network.add_neuron(motor_neuron_spk, name='R_scapula_ext_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_scapula_flx_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_shoulder_ext_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_shoulder_flx_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_wrist_ext_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='R_wrist_flx_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_scapula_ext_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_scapula_flx_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_shoulder_ext_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_shoulder_flx_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_wrist_ext_muscle_forelimb', color='blue')
+    spike_network.add_neuron(motor_neuron_spk, name='L_wrist_flx_muscle_forelimb', color='blue')
+
+    spike_network.add_output('R_hip_ext_muscle'  ,spiking=True)
+    spike_network.add_output('R_hip_flx_muscle'  ,spiking=True)
+    spike_network.add_output('R_knee_ext_muscle' ,spiking=True)
+    spike_network.add_output('R_knee_flx_muscle' ,spiking=True)
+    spike_network.add_output('R_ankle_ext_muscle',spiking=True)
+    spike_network.add_output('R_ankle_flx_muscle',spiking=True)
+    spike_network.add_output('L_hip_ext_muscle'  ,spiking=True)
+    spike_network.add_output('L_hip_flx_muscle'  ,spiking=True)
+    spike_network.add_output('L_knee_ext_muscle' ,spiking=True)
+    spike_network.add_output('L_knee_flx_muscle' ,spiking=True)
+    spike_network.add_output('L_ankle_ext_muscle',spiking=True)
+    spike_network.add_output('L_ankle_flx_muscle',spiking=True)
+    spike_network.add_output('R_scapula_ext_muscle_forelimb',spiking=True)
+    spike_network.add_output('R_scapula_flx_muscle_forelimb',spiking=True)
+    spike_network.add_output('R_shoulder_ext_muscle_forelimb',spiking=True)
+    spike_network.add_output('R_shoulder_flx_muscle_forelimb',spiking=True)
+    spike_network.add_output('R_wrist_ext_muscle_forelimb',spiking=True)
+    spike_network.add_output('R_wrist_flx_muscle_forelimb',spiking=True)
+    spike_network.add_output('L_scapula_ext_muscle_forelimb',spiking=True)
+    spike_network.add_output('L_scapula_flx_muscle_forelimb',spiking=True)
+    spike_network.add_output('L_shoulder_ext_muscle_forelimb',spiking=True)
+    spike_network.add_output('L_shoulder_flx_muscle_forelimb',spiking=True)
+    spike_network.add_output('L_wrist_ext_muscle_forelimb',spiking=True)
+    spike_network.add_output('L_wrist_flx_muscle_forelimb',spiking=True)
+
+    render(spike_network, view=False, save=True, filename='python/fig_networks/jack_spk', img_format='png')
+
+    return spike_network
 
 def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True): 
 
@@ -490,19 +373,18 @@ def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=
 
     whole_net = Network('hindlimbs')
 
-    hindlimb_net = build_hindlimbs(Cm=Cm, cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
-    forelimb_net = build_forelimbs(Cm=Cm, cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
-    # hindlimb_false = build_hindlimbs(cpg_gsyn = 0)
+    limb_net = build_limbs(Cm=Cm, cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
+    # hindlimb_false = build_limbs(cpg_gsyn = 0)
 
-    whole_net.add_network(hindlimb_net, suffix='_hi_R')
+    whole_net.add_network(limb_net, suffix='_hi_R')
     whole_net.add_input('RG_HC_ext_hi_R')
-    whole_net.add_network(hindlimb_net, suffix='_hi_L')
+    whole_net.add_network(limb_net, suffix='_hi_L')
     whole_net.add_input('RG_HC_flx_hi_L')
 
     # add forelimb hindlimb networks
-    whole_net.add_network(forelimb_net, suffix='_fo_R')
+    whole_net.add_network(limb_net, suffix='_fo_R')
     whole_net.add_input('RG_HC_ext_fo_R')
-    whole_net.add_network(forelimb_net, suffix='_fo_L')
+    whole_net.add_network(limb_net, suffix='_fo_L')
     whole_net.add_input('RG_HC_flx_fo_L')
 
     RG_adjust = 1
@@ -648,6 +530,42 @@ def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=
     whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_R_fo2hi')
     whole_net.add_connection(exc_0_1_ext, 'V3e_R_fo2hi', 'RG_HC_ext_hi_R')
 
+    '''
+    Add spiking network.
+
+    Connect non-spiking neurons to spiking outputs via a synapse, instead of a transfer function
+    '''
+
+    spk_net = spike_net(dt = 0.01, return_net = False)
+    whole_net.add_network(spk_net, suffix="_spk")
+
+    non2spk = NonSpikingSynapse(max_conductance=.12, reversal_potential=20, e_hi=-60, e_lo=-100) # directly proportional to the period
+    
+    whole_net.add_connection(non2spk,'MN_ext_Hip_hi_R','R_hip_ext_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Hip_hi_R','R_hip_flx_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Knee_hi_R','R_knee_ext_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Knee_hi_R','R_knee_flx_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Ankle_hi_R','R_ankle_ext_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Ankle_hi_R','R_ankle_flx_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Hip_hi_L','L_hip_ext_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Hip_hi_L','L_hip_flx_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Knee_hi_L','L_knee_ext_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Knee_hi_L','L_knee_flx_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Ankle_hi_L','L_ankle_ext_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Ankle_hi_L','L_ankle_flx_muscle_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Hip_fo_R','R_scapula_ext_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Hip_fo_R','R_scapula_flx_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Knee_fo_R','R_shoulder_ext_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Knee_fo_R','R_shoulder_flx_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Ankle_fo_R','R_wrist_ext_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Ankle_fo_R','R_wrist_flx_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Hip_fo_L','L_scapula_ext_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Hip_fo_L','L_scapula_flx_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Knee_fo_L','L_shoulder_ext_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Knee_fo_L','L_shoulder_flx_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_ext_Ankle_fo_L','L_wrist_ext_muscle_forelimb_spk')
+    whole_net.add_connection(non2spk,'MN_flx_Ankle_fo_L','L_wrist_flx_muscle_forelimb_spk')
+    
     render(whole_net, view=False, save=True, filename='Python/fig_networks/jack_sns.png', img_format='png')
 
     mn_labels = whole_net.outputs # TODO: Determine method by which to ehindlimbantly search for output names.
@@ -657,208 +575,12 @@ def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=
     else:
         return whole_net.compile(backend='numpy', dt=dt)
 
-def spike_net(dt = 0.01, return_net = False):
-    spike_network = Network('python/fig_networks/Jack_Non2Spk')
 
-    motor_neuron_non2spk = SpikingNeuron(name='MN_spk', color='yellow', threshold_initial_value = 1, threshold_time_constant = 50, membrane_capacitance = 50)
-
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_hip_ext_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_hip_flx_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_knee_ext_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_knee_flx_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_ankle_ext_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_ankle_flx_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_hip_ext_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_hip_flx_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_knee_ext_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_knee_flx_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_ankle_ext_muscle', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_ankle_flx_muscle', color='blue')
-
-    spike_network.add_input('R_hip_ext_muscle')
-    spike_network.add_input('R_hip_flx_muscle')
-    spike_network.add_input('R_knee_ext_muscle')
-    spike_network.add_input('R_knee_flx_muscle')
-    spike_network.add_input('R_ankle_ext_muscle')
-    spike_network.add_input('R_ankle_flx_muscle')
-    spike_network.add_input('L_hip_ext_muscle')
-    spike_network.add_input('L_hip_flx_muscle')
-    spike_network.add_input('L_knee_ext_muscle')
-    spike_network.add_input('L_knee_flx_muscle')
-    spike_network.add_input('L_ankle_ext_muscle')
-    spike_network.add_input('L_ankle_flx_muscle')
-
-    spike_network.add_output('R_hip_ext_muscle'  ,spiking=True)
-    spike_network.add_output('R_hip_flx_muscle'  ,spiking=True)
-    spike_network.add_output('R_knee_ext_muscle' ,spiking=True)
-    spike_network.add_output('R_knee_flx_muscle' ,spiking=True)
-    spike_network.add_output('R_ankle_ext_muscle',spiking=True)
-    spike_network.add_output('R_ankle_flx_muscle',spiking=True)
-    spike_network.add_output('L_hip_ext_muscle'  ,spiking=True)
-    spike_network.add_output('L_hip_flx_muscle'  ,spiking=True)
-    spike_network.add_output('L_knee_ext_muscle' ,spiking=True)
-    spike_network.add_output('L_knee_flx_muscle' ,spiking=True)
-    spike_network.add_output('L_ankle_ext_muscle',spiking=True)
-    spike_network.add_output('L_ankle_flx_muscle',spiking=True)
-
-    ### forelimb hindlimb spiking network
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_scapula_ext_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_scapula_flx_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_shoulder_ext_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_shoulder_flx_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_wrist_ext_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='R_wrist_flx_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_scapula_ext_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_scapula_flx_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_shoulder_ext_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_shoulder_flx_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_wrist_ext_muscle_forelimb', color='blue')
-    spike_network.add_neuron(motor_neuron_non2spk, name='L_wrist_flx_muscle_forelimb', color='blue')
-
-    spike_network.add_input('R_scapula_ext_muscle_forelimb')
-    spike_network.add_input('R_scapula_flx_muscle_forelimb')
-    spike_network.add_input('R_shoulder_ext_muscle_forelimb')
-    spike_network.add_input('R_shoulder_flx_muscle_forelimb')
-    spike_network.add_input('R_wrist_ext_muscle_forelimb')
-    spike_network.add_input('R_wrist_flx_muscle_forelimb')
-    spike_network.add_input('L_scapula_ext_muscle_forelimb')
-    spike_network.add_input('L_scapula_flx_muscle_forelimb')
-    spike_network.add_input('L_shoulder_ext_muscle_forelimb')
-    spike_network.add_input('L_shoulder_flx_muscle_forelimb')
-    spike_network.add_input('L_wrist_ext_muscle_forelimb')
-    spike_network.add_input('L_wrist_flx_muscle_forelimb')
-
-    spike_network.add_output('R_scapula_ext_muscle_forelimb',spiking=True)
-    spike_network.add_output('R_scapula_flx_muscle_forelimb',spiking=True)
-    spike_network.add_output('R_shoulder_ext_muscle_forelimb',spiking=True)
-    spike_network.add_output('R_shoulder_flx_muscle_forelimb',spiking=True)
-    spike_network.add_output('R_wrist_ext_muscle_forelimb',spiking=True)
-    spike_network.add_output('R_wrist_flx_muscle_forelimb',spiking=True)
-    spike_network.add_output('L_scapula_ext_muscle_forelimb',spiking=True)
-    spike_network.add_output('L_scapula_flx_muscle_forelimb',spiking=True)
-    spike_network.add_output('L_shoulder_ext_muscle_forelimb',spiking=True)
-    spike_network.add_output('L_shoulder_flx_muscle_forelimb',spiking=True)
-    spike_network.add_output('L_wrist_ext_muscle_forelimb',spiking=True)
-    spike_network.add_output('L_wrist_flx_muscle_forelimb',spiking=True)
-
-    render(spike_network, view=False, save=True, filename='python/fig_networks/jack_non2spk', img_format='png')
-
-    if return_net:
-        return spike_network.compile(backend='numpy', dt=dt), spike_net
-    else:
-        return spike_network.compile(backend='numpy', dt=dt)
-
-
-    # # based on Alex Puppy Robot
-    # base_neuron = NonSpikingNeuron(color='yellow', membrane_capacitance=5.0, membrane_conductance=1, resting_potential=-60)
-
-    # whole_net.add_neuron(base_neuron, 'L_Cort_IN_exc')
-    # whole_net.add_neuron(base_neuron,'L_Cort_IN_inh')
-    # whole_net.add_neuron(base_neuron,'R_Cort_IN_exc')
-    # whole_net.add_neuron(base_neuron,'R_Cort_IN_inh')
-
-    # unit_add = NonSpikingSynapse(max_conductance=0.08, reversal_potential=0,e_hi=-40, e_lo=-60)
-    # whole_net.add_connection(unit_add, 'L_RG_IN_flx', 'L_Cort_IN_exc')
-    # whole_net.add_connection(unit_add, 'R_RG_IN_flx', 'R_Cort_IN_exc')
-
-    # unit_add = NonSpikingSynapse(max_conductance=0.3, reversal_potential=0,e_hi=-40, e_lo=-60)
-    # whole_net.add_connection(unit_add, 'L_RG_IN_flx', 'L_Cort_IN_inh')    
-    # whole_net.add_connection(unit_add, 'R_RG_IN_flx', 'R_Cort_IN_inh')
-
-    # mutual_inhibit = NonSpikingSynapse(max_conductance=0.04, reversal_potential=-100,e_hi=-40, e_lo=-60)
-    # whole_net.add_connection(mutual_inhibit, 'L_Cort_IN_inh', 'R_Cort_IN_inh')
-    # whole_net.add_connection(mutual_inhibit, 'R_Cort_IN_inh', 'L_Cort_IN_inh')
-
-    # unit_add = NonSpikingSynapse(max_conductance=0.014, reversal_potential=0,e_hi=-40, e_lo=-60)
-    # whole_net.add_connection(unit_add, 'L_Cort_IN_exc', 'R_RG_IN_flx')
-    # whole_net.add_connection(unit_add, 'R_Cort_IN_exc', 'L_RG_IN_flx')
-    
-    # unit_sub = NonSpikingSynapse(max_conductance=0.04, reversal_potential=-100,e_hi=-40, e_lo=-60)
-    # whole_net.add_connection(unit_sub, 'L_Cort_IN_inh', 'R_RG_IN_flx')
-    # whole_net.add_connection(unit_sub, 'R_Cort_IN_inh', 'L_RG_IN_flx')
-
-
-
-
-    # if return_net:
-    #     return whole_net.compile(backend='numoy', dt=dt), whole_net
-    # else:
-    #     return whole_net.compile(backend='numoy', dt=dt)
-    
 
 def main():
     sns_model = build_net()
-    # print(sns_model.num_inputs)
-
+    print(sns_model.num_inputs)
+    print(sns_model.num_outputs)
 
 if __name__ == '__main__':
     main()
-
-    #Inputs: should be 32
-
-    #Right
-    # 0  Hip_IaIN_ext
-    # 1  Hip_IaIN_flx
-    # 2  Hip_IbIN_ext
-    # 3  Hip_IbIN_flx
-    # 4  Hip_II_IN_ext
-    # 5  Hip_II_IN_flx
-    # 6  Knee_IaIN_ext
-    # 7  Knee_IaIN_flx
-    # 8  Knee_IbIN_ext
-    # 9  Knee_IbIN_flx
-    # 10 Ankle_IaIN_ext
-    # 11 Ankle_IaIN_flx
-    # 12 Ankle_IbIN_ext
-    # 13 Ankle_IbIN_flx
-    # 14 Ankle_II_IN_flx
-    # 15 RG_HC_ext
-
-    #Left
-    # 16 Hip_IaIN_ext
-    # 17 Hip_IaIN_flx
-    # 18 Hip_IbIN_ext
-    # 19 Hip_IbIN_flx
-    # 20 Hip_II_IN_ext
-    # 21 Hip_II_IN_flx
-    # 22 Knee_IaIN_ext
-    # 23 Knee_IaIN_flx
-    # 24 Knee_IbIN_ext
-    # 25 Knee_IbIN_flx
-    # 26 Ankle_IaIN_ext
-    # 27 Ankle_IaIN_flx
-    # 28 Ankle_IbIN_ext
-    # 29 Ankle_IbIN_flx
-    # 30 Ankle_II_IN_flx
-    # 31 RG_HC_flx
-
-
-
-    #outputs should be 24
-    # right Side
-    # 0 - hip mn ext
-    # 1 - hip mn flx
-    # 2 - knee mn ext
-    # 3 - knee mn flx
-    # 4 - ankle mn ext
-    # 5 - ankle mn flx
-    # 6 - RG ext
-    # 7 - RG flx
-    # 8 - hip PF ext
-    # 9 - hip PF flx
-    # 10- KA PF ext
-    # 11- KA PF flx
-
-    # left Side
-    # 12 - hip mn ext
-    # 13 - hip mn flx
-    # 14 - knee mn ext
-    # 15 - knee mn flx
-    # 16 - ankle mn ext
-    # 17 - ankle mn flx
-    # 18 - RG ext
-    # 19 - RG flx
-    # 20 - hip PF ext
-    # 21 - hip PF flx
-    # 22 - KA PF ext
-    # 23 - KA PF flx

@@ -50,8 +50,6 @@ def mujoco_model(xml_path):
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
 
-    print("... MuJoCo Model Loaded")
-
     # set some initiial positions: left leg forward, right leg back
     # data.qpos[6] = -0.1
     # data.qpos[14] = 0.1
@@ -905,34 +903,44 @@ def run_sims(dt,
     sns_dt = mujoco_dt * 1000
     mujoco_sim, mujoco_data = mujoco_model(xml_path)
     mujoco_sim.opt.timestep = mujoco_dt
+    print("... MuJoCo Model Loaded")
     sns_model = build_net(dt=sns_dt, Cm=Cm, cpg_gsyn=cpg_gsyn, feed_forward=feed_forward)
-    spk_model = spike_net(dt=sns_dt) # Nonspiking to spiking conversion network
+    print("... SNS Model Loaded")
+    print("\n")
+    print(sns_model.num_inputs)
+    print(sns_model.num_outputs)
 
     # ----------- DATA STRUCTURES ----------- 
 
-    # DATA STRUCTURES for SNS
-    num_outputs = sns_model.num_outputs
-    sns_sim_data = np.zeros([len(t), num_outputs])
-    sns_sim_data[0] = [-100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60, 
-                       -100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60,
-                       -100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60, 
-                       -100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60]
-    num_spk_out = spk_model.num_outputs
-    sns_spk_data = np.zeros([len(t), num_spk_out])
-    sns_spk_data[0] = np.zeros([num_spk_out])
-    num_inputs   = int(sns_model.num_inputs)
-    sns_inputs   = np.concatenate([np.zeros(num_inputs-1), [0]])
-    num_spk_in   = int(spk_model.num_inputs)
-    spk_inputs   = np.concatenate([np.zeros(num_spk_in)])
+
+    # num_spk_in   = int(spk_model.num_inputs)
+    # spk_inputs   = np.concatenate([np.zeros(num_spk_in)])
 
     # This is a convenient way to determine the indices of ALL MuJoCo objects 
     muscles_list = [mujoco.mj_id2name(mujoco_sim, mujoco.mjtObj.mjOBJ_ACTUATOR, i) for i in range(mujoco_sim.nu)]
     all_joint_names = [mujoco.mj_id2name(mujoco_sim, mujoco.mjtObj.mjOBJ_JOINT, i) for i in range(mujoco_sim.njnt)]
     joint_list = [name for name in all_joint_names if any(keyword in name for keyword in ['hip', 'knee', 'ankle', 'scapula', 'shoulder', 'wrist'])]
-    
+
     # Link indices to their keys in a dictionary, so that we can reference them directly by name later
     joint_indices  = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_JOINT, name)    for name in  joint_list}
     muscle_indices = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_ACTUATOR, name) for name in  muscles_list}
+
+    # DATA STRUCTURES for SNS
+    num_outputs = sns_model.num_outputs
+    all_sim_data = np.zeros([len(t), num_outputs])
+
+    num_sns_out = len(muscles_list) * 2
+    sns_sim_data = np.zeros([len(t), num_sns_out])
+    sns_sim_data[0] = [-100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60, 
+                       -100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60,
+                       -100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60, 
+                       -100.0, -100.0, -100.0, -100.0, -100.0, -100.0, -60, -60, -60, -60, -60, -60]
+    num_inputs   = int(sns_model.num_inputs)
+    sns_inputs   = np.concatenate([np.zeros(num_inputs-1), [0]])
+    
+    num_spk_out = len(muscles_list)
+    spk_sim_data = np.zeros([len(t), num_spk_out])
+    spk_sim_data[0] = np.zeros([num_spk_out])
 
     # DATA STRUCTURES for raw sensor data (to be recorded at each timestep)
     potentiometer_data   = {key: np.zeros(num_comms) for key in joint_list}
@@ -1178,6 +1186,12 @@ def run_sims(dt,
             mn_indices[name] = indeek
         print(f'{name}_index = {indeek}')
 
+    # spk_indices = {}
+    # for ind, name in enumerate(muscles_list):
+    #         indeek = ind + 48
+    #         spk_indices[name] = indeek
+    #         print(f'spk_{name}_index = {indeek}')
+
     # --- Loop Timing Variables ---
     time_print    = 0
     time_sns      = 0
@@ -1205,19 +1219,24 @@ def run_sims(dt,
         time_mark  = clock.perf_counter()
 
         # --- Step SNS Models ---
-        sns_sim_data[i, :] = sns_model(x=sns_inputs)
+        all_sim_data[i, :] = sns_model(x=sns_inputs)
+        # print(all_sim_data)
+
+        sns_sim_data[i, :] = all_sim_data[i, 0:48]
+        spk_sim_data[i, :] = all_sim_data[i, 48:72]
+
         time_sns += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
 
-        # Convert SNS output to spiking inputs ---
-        for muscle in muscle_indices.keys():
-            spk_inputs[muscle_indices[muscle]] = spike_TF(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_mid[muscle], bandwidth=act_bandwidth[muscle])
-        sns_spk_data[i, :] = spk_model(x=spk_inputs)
+        # # Convert SNS output to spiking inputs ---
+        # for muscle in muscle_indices.keys():
+        #     spk_inputs[muscle_indices[muscle]] = spike_TF(x=sns_sim_data[i-1, mn_indices[muscle]], half_point=act_mid[muscle], bandwidth=act_bandwidth[muscle])
+        # spk_sim_data[i, :] = spk_model(x=spk_inputs)
         
-        # print((sns_spk_data[i, :]))
-        # spikes_raw = np.concatenate((np.array(sns_spk_data[i, 0:12], dtype=bool), np.array(sns_spk_data[i, 0:12], dtype=bool)))
+        # print((spk_sim_data[i, :]))
+        # spikes_raw = np.concatenate((np.array(spk_sim_data[i, 0:12], dtype=bool), np.array(spk_sim_data[i, 0:12], dtype=bool)))
         # print((spikes_raw))
-        spikes_raw = np.array(sns_spk_data[i, :], dtype=bool)
+        spikes_raw = np.array(spk_sim_data[i, :], dtype=bool)
         time_spk += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
 
@@ -1297,7 +1316,7 @@ def run_sims(dt,
             for muscle in muscle_indices.keys():
                 mujoco_data.act[muscle_indices[muscle]] = stim_to_act(sns_sim_data[i-1, mn_indices[muscle]])
             for muscle in muscle_indices.keys():
-                if sns_spk_data[i, muscle_indices[muscle]] == 1:
+                if spk_sim_data[i, muscle_indices[muscle]] == 1:
                     pulse_data[i:i+int(20 - 1), muscle_indices[muscle]] = 1
                 mujoco_data.act[muscle_indices[muscle]] = pulse_data[i, muscle_indices[muscle]]
             mujoco.mj_step(mujoco_sim, mujoco_data)
@@ -1358,14 +1377,15 @@ def run_sims(dt,
     np.save(f'Python/{data}/comm_times.npy', np.arange(comm_index)*comm_dt*1000)
     np.save(f'Python/{data}/time.npy', time)
     np.save(f'Python/{data}/sns_sim_data.npy', sns_sim_data)
-    np.save(f'Python/{data}/sns_spk_data.npy', sns_spk_data)
+    np.save(f'Python/{data}/spk_sim_data.npy', spk_sim_data)
     np.save(f'Python/{data}/joint_ang.npy', joint_ang)
     np.save(f'Python/{data}/muscle_len.npy', muscle_len)
     np.save(f'Python/{data}/muscle_vel.npy', muscle_vel)
     np.save(f'Python/{data}/muscle_ten.npy', muscle_ten)
 
     plot_sns(t, sns_sim_data.T)
-    plot_spk(t, sns_spk_data.T)
+    plot_spk(t, spk_sim_data.T)
+
     if muscle_mutt:
         plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
     else:
@@ -1436,7 +1456,7 @@ def main():
 
     cpg_gsyn = 1.49167  # RG oscillation AMPLITUDE (small adjustments make a big difference!)
     mem_cap =  10       # RG oscillation PHASE (membrane capacitance of HC neurons)
-    end_time = 5    # simulation end seconds
+    end_time = 4    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
