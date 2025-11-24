@@ -23,7 +23,7 @@
 - [Adjust walking speed](#adjust-walking-speed)
   - [](#)
 
-<img width="1800" src="quad_git_images/quad_git_images.001.png" />
+<img width="1800" src="Documentation/quad_git_images/quad_git_images.001.png" />
 
 # System Overview
 
