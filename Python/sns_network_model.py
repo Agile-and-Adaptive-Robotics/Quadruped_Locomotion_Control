@@ -542,23 +542,9 @@ def build_net(neuron_params, dt):
 
 
 def main():
-    sns_model = build_net(neuron_params= {
-        "Cm":         5,
-        "Gm":         1,
-        "Ena":        50,
-        "Er":         -60,
-        "Sm":         0.2,
-        "Sh":         -0.6,
-        "Km":         1,
-        "Kh":         0.5,
-        "Em":         -40,
-        "Eh":         -60,
-        "tauHmax":    500,
-        "Gna":        1.5,
-        "cpg_gsyn":   1.49167,
-    }, dt = 1)
-    print(sns_model.num_inputs)
-    print(sns_model.num_outputs)
+    sns_model = build_net(neuron_params, dt)
+    # print(sns_model.num_inputs)
+    # print(sns_model.num_outputs)
 
 if __name__ == '__main__':
     main()

@@ -857,7 +857,6 @@ def run_sims(dt,
              cpg_inputs, 
              neuron_params,
              muscle_mutt=False,
-             make_vid=True,
              spike_port_name='name_goes_here',
              sense_port_name='name_goes_here',
              data_location=False):
@@ -1356,7 +1355,7 @@ def run_sims(dt,
         time_mark = clock.perf_counter()
 
         # --- Video Frame Rendering ---
-        if make_vid:
+        if not muscle_mutt:
             if len(frames) < mujoco_data.time * framerate:
                 renderer.update_scene(mujoco_data, camera='close')
                 pixels = renderer.render().copy()
@@ -1369,7 +1368,7 @@ def run_sims(dt,
     ###################################################################################
     time_loop = clock.perf_counter() - time_start   # Calculate the actual simulation time
 
-    if make_vid == True:
+    if not muscle_mutt:
         media.write_video('full_hindlimb_sim.mp4', frames, fps=framerate)
 
     data = 'data'
@@ -1440,19 +1439,12 @@ def main():
                          # If false: operates with feedback to SNS
     muscle_mutt = False  # If true : configured for communication to Muscle Mutt robot
                          # If false: configured for communication to MuJoCo Model
-    
-    if not muscle_mutt:  # If true: generate video of MuJoCo simulation
-        make_vid = True
-    else:
-        make_vid = False
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data
-    xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
-    # if muscle_mutt:
+
+    xml_path      = 'python/quadruped_model.xml' # quadruped robot mujoco model path
     data_location = 'data' # location to save data
-    # else:
-    #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
     neuron_params = {
         "Cm":         5,
@@ -1470,7 +1462,7 @@ def main():
         "cpg_gsyn":   1.49167,
     }
 
-    end_time = 1    # simulation end seconds
+    end_time = 5    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
@@ -1491,7 +1483,6 @@ def main():
                     neuron_params=neuron_params,
 
                     muscle_mutt=muscle_mutt,
-                    make_vid=make_vid,
                     spike_port_name=spike_port_name,
                     sense_port_name=sense_port_name,
                     data_location=data_location)
