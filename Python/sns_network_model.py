@@ -84,30 +84,28 @@ class MotorCircuit(Network): # Note that this network is also a preset available
         self.add_output('MN_ext')
         self.add_output('MN_flx')
 
-def build_limbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
+def build_limbs(neuron_params):
 
-    net = Network('Kaiyu_2layehi_Rndlimb')
+    net = Network('limb')
 
-    if feed_forward == True:
-        MN_mag = 2
-    else:
-        MN_mag = 1
+    Cm =         neuron_params["Cm"]
+    Gm =         neuron_params["Gm"]
+    Ena =        neuron_params["Ena"]
+    Er =         neuron_params["Er"]
+    Sm =         neuron_params["Sm"]
+    Sh =         neuron_params["Sh"]
+    Km =         neuron_params["Km"]
+    Kh =         neuron_params["Kh"]
+    Em =         neuron_params["Em"]
+    Eh =         neuron_params["Eh"]
+    tauHmax =    neuron_params["tauHmax"]
+    Gna =        neuron_params["Gna"]
+    cpg_gsyn =   neuron_params["cpg_gsyn"]
 
-    Cm = 5
-    Gm = 1
-    Ena = 50
-    Er = -60
-    Sm = 0.2
-    Sh = -0.6
     delEna = Ena
-    Km = 1
-    Kh = 0.5
-    Em = -40
-    Eh = -60
     delEm = Em
     delEh = Eh
-    tauHmax = 500
-    Gna = 1.5
+
     # reformat for sns-toolbox
     g_ion = [Gna]
     e_ion = [delEna]
@@ -223,14 +221,14 @@ def build_limbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     # PF -> Motor Circuits
     PF2Ia = NonSpikingSynapse(max_conductance=0.5, reversal_potential=-40, e_hi=-55, e_lo=-60)
 
-    PF2HipMN_ext = NonSpikingSynapse(max_conductance=2.565*0.15*MN_mag*4, reversal_potential=-10, e_hi=-50, e_lo=-60)
-    PF2HipMN_flx = NonSpikingSynapse(max_conductance=3.632*0.07*MN_mag*4, reversal_potential=-10, e_hi=-50, e_lo=-60)
+    PF2HipMN_ext = NonSpikingSynapse(max_conductance=2.565*0.15*4, reversal_potential=-10, e_hi=-50, e_lo=-60)
+    PF2HipMN_flx = NonSpikingSynapse(max_conductance=3.632*0.07*4, reversal_potential=-10, e_hi=-50, e_lo=-60)
 
-    PF2KneeMN_ext = NonSpikingSynapse(max_conductance=2.1*MN_mag, reversal_potential=-40, e_hi=-50, e_lo=-60)
-    PF2KneeMN_flx = NonSpikingSynapse(max_conductance=1.6*MN_mag, reversal_potential=-40, e_hi=-50, e_lo=-60)
+    PF2KneeMN_ext = NonSpikingSynapse(max_conductance=2.1, reversal_potential=-40, e_hi=-50, e_lo=-60)
+    PF2KneeMN_flx = NonSpikingSynapse(max_conductance=1.6, reversal_potential=-40, e_hi=-50, e_lo=-60)
 
-    PF2AnkleMN_ext = NonSpikingSynapse(max_conductance=2.7*MN_mag, reversal_potential=-10, e_hi=-50, e_lo=-60)
-    PF2AnkleMN_flx = NonSpikingSynapse(max_conductance=4.4*MN_mag, reversal_potential=-40, e_hi=-50, e_lo=-60)
+    PF2AnkleMN_ext = NonSpikingSynapse(max_conductance=2.7, reversal_potential=-10, e_hi=-50, e_lo=-60)
+    PF2AnkleMN_flx = NonSpikingSynapse(max_conductance=4.4, reversal_potential=-40, e_hi=-50, e_lo=-60)
     
     net.add_connection(PF2Ia, 'PF_HC_ext_Hip','Ia_ext_Hip')
     net.add_connection(PF2Ia, 'PF_HC_flx_Hip','Ia_flx_Hip')
@@ -276,7 +274,7 @@ def build_limbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     return net
 
 
-def spike_net(dt = 0.01, return_net = False):
+def spike_net(dt = 0.01):
     spike_network = Network('SpikeNet')
 
     motor_neuron_spk = SpikingNeuron(name='MN_spk', color='yellow', threshold_initial_value = 1, threshold_time_constant = 50, membrane_capacitance = 50)
@@ -337,44 +335,13 @@ def spike_net(dt = 0.01, return_net = False):
 
     return spike_network
 
-def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=True): 
+def build_net(neuron_params, dt):
 
-    # if feed_forward == True:
-    #     RG_mag = 2
-    # else:
-    #     RG_mag = 1
+    # Create the space for the entire network to live
+    whole_net = Network('all_legs')
 
-    Cm = Cm
-    Gm = 1
-    Ena = 50
-    Er = -60
-    Sm = 0.2
-    Sh = -0.6
-    delEna = Ena
-    Km = 1
-    Kh = 0.5
-    Em = -40
-    Eh = -60
-    delEm = Em
-    delEh = Eh
-    tauHmax = 500
-    Gna = 1.5
-    # reformat for sns-toolbox
-    # reformat for sns-toolbox
-    g_ion = [Gna]
-    e_ion = [delEna]
-    k_m = [Km]
-    slope_m = [Sm]
-    e_m = [delEm]
-    k_h = [Kh]
-    slope_h = [Sh]
-    e_h = [delEh]
-    tau_max_h = [tauHmax]
-
-    whole_net = Network('hindlimbs')
-
-    limb_net = build_limbs(Cm=Cm, cpg_gsyn=cpg_gsyn,feed_forward=feed_forward)
-    # hindlimb_false = build_limbs(cpg_gsyn = 0)
+    # Create the model of a limb network
+    limb_net = build_limbs(neuron_params)
 
     whole_net.add_network(limb_net, suffix='_hi_R')
     whole_net.add_input('RG_HC_ext_hi_R')
@@ -536,7 +503,7 @@ def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=
     Connect non-spiking neurons to spiking outputs via a synapse, instead of a transfer function
     '''
 
-    spk_net = spike_net(dt = 0.01, return_net = False)
+    spk_net = spike_net(dt = 0.01)
     whole_net.add_network(spk_net, suffix="_spk")
 
     non2spk = NonSpikingSynapse(max_conductance=.12, reversal_potential=20, e_hi=-60, e_lo=-100) # directly proportional to the period
@@ -570,15 +537,26 @@ def build_net(Cm, cpg_gsyn=1.49167, dt = 0.01, return_net = False, feed_forward=
 
     mn_labels = whole_net.outputs # TODO: Determine method by which to ehindlimbantly search for output names.
 
-    if return_net:
-        return whole_net.compile(backend='numpy', dt=dt), whole_net
-    else:
-        return whole_net.compile(backend='numpy', dt=dt)
+    return whole_net.compile(backend='numpy', dt=dt)
 
 
 
 def main():
-    sns_model = build_net()
+    sns_model = build_net(neuron_params= {
+        "Cm":         5,
+        "Gm":         1,
+        "Ena":        50,
+        "Er":         -60,
+        "Sm":         0.2,
+        "Sh":         -0.6,
+        "Km":         1,
+        "Kh":         0.5,
+        "Em":         -40,
+        "Eh":         -60,
+        "tauHmax":    500,
+        "Gna":        1.5,
+        "cpg_gsyn":   1.49167,
+    }, dt = 1)
     print(sns_model.num_inputs)
     print(sns_model.num_outputs)
 

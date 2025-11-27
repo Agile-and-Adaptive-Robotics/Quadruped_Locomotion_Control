@@ -21,6 +21,7 @@
   - [Python](#python)
     - [Modes of Operation](#modes-of-operation)
   - [Adjust walking speed](#adjust-walking-speed)
+  - [Neuron Parameter Adjustments](#neuron-parameter-adjustments)
       - [*Troubleshooting: Serial Paths*](#troubleshooting-serial-paths)
       - [*Troubleshooting: Sensory Data Teensy*](#troubleshooting-sensory-data-teensy)
 
@@ -99,20 +100,21 @@ Python receives
 <p align="center">
 <img width="400" src="Documentation/quad_git_images/quad_git_images.015.png" />
 </p>
-<!-- ### Code Breakdown
+
+<!-- <!-- ### Code Breakdown
 
 <!-- This image shows only the control loop, it does not demonstrate how control and sensory data are processed at every timestep.
-To do this, we examine a control flowchart. --> -->
+To do this, we examine a control flowchart. -->
 <!-- 
 <img width="800" src="Documentation/Flowcharts/flow_chart_sim_loop.png" />
-  -->
+
 <!-- ## Serial Pipeline
 
 Sendospiko sends and recieves spikes, using a queue to buffer the spikes being sent.
 It is run as a separate thread called inside of the loop. This is so that the serial handling does not dominate simulation loop use.
     
-teensy_queue: Defined outside of function, stores a queue of spikes accessable from inside and outside of thread. -->
-
+teensy_queue: Defined outside of function, stores a queue of spikes accessable from inside and outside of thread. 
+-->
 
 
 
@@ -308,6 +310,11 @@ The RG half centers are non-spiking neurons with persistent sodium channels. In 
 * $I_{ion}$ = $\sum_j [Gj * m_{inf,j}^{P_m} * h_j^{P_h} * (E_j - U)]$
 
 Decreasing the membrane capacitance also seems to simply increase the amplitude of oscillations, as well as increasing (tau_max), which for some reason changes non-spiking neuron behavior.
+
+## Neuron Parameter Adjustments
+
+This work will use a dictionary, created in the main file of the simulation code, to store neuron parameters.
+This is because I want to be able to edit the neuron parameters with the other simulation parameters, but package them neatly for their long journey to the SNS compilation in [sns_network_model.py](Python/sns_network_model.py)
 
 #### *Troubleshooting: Serial Paths*
 

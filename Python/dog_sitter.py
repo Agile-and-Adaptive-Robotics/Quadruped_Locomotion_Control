@@ -855,9 +855,7 @@ def run_sims(dt,
              num_comms,
              xml_path, 
              cpg_inputs, 
-             Cm = 5,
-             cpg_gsyn=1.49167, 
-             feed_forward=True,
+             neuron_params,
              muscle_mutt=False,
              make_vid=True,
              spike_port_name='name_goes_here',
@@ -904,7 +902,9 @@ def run_sims(dt,
     mujoco_sim, mujoco_data = mujoco_model(xml_path)
     mujoco_sim.opt.timestep = mujoco_dt
     print("... MuJoCo Model Loaded")
-    sns_model = build_net(dt=sns_dt, Cm=Cm, cpg_gsyn=cpg_gsyn, feed_forward=feed_forward)
+
+    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt)
+    
     print("... SNS Model Loaded")
     print("\n")
     print(sns_model.num_inputs)
@@ -1454,9 +1454,23 @@ def main():
     # else:
     #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
 
-    cpg_gsyn = 1.49167  # RG oscillation AMPLITUDE (small adjustments make a big difference!)
-    mem_cap =  10       # RG oscillation PHASE (membrane capacitance of HC neurons)
-    end_time = 4    # simulation end seconds
+    neuron_params = {
+        "Cm":         5,
+        "Gm":         1,
+        "Ena":        50,
+        "Er":         -60,
+        "Sm":         0.2,
+        "Sh":         -0.6,
+        "Km":         1,
+        "Kh":         0.5,
+        "Em":         -40,
+        "Eh":         -60,
+        "tauHmax":    500,
+        "Gna":        1.5,
+        "cpg_gsyn":   1.49167,
+    }
+
+    end_time = 1    # simulation end seconds
     dt = 1/1000     # simulation step size (1 ms is pretty large)
     num_steps = int(end_time/dt)    # Do not edit
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
@@ -1473,9 +1487,9 @@ def main():
                     num_comms=num_comms,
                     xml_path=xml_path, 
                     cpg_inputs=cpg_inputs, 
-                    Cm = mem_cap,
-                    cpg_gsyn=cpg_gsyn, 
-                    feed_forward=feed_fwd,
+
+                    neuron_params=neuron_params,
+
                     muscle_mutt=muscle_mutt,
                     make_vid=make_vid,
                     spike_port_name=spike_port_name,
