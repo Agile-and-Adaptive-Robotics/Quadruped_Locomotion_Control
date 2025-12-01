@@ -1235,6 +1235,14 @@ def run_sims(dt,
         nonspk_data[i, :] = sns_outputs[i, 0:48]
         spk_data[i, :]    = sns_outputs[i, 48:72]
 
+        if not fore_limbs: # Permanently activate the scapula if the forelimbs are not controlled.
+            # spk_data[i, 12] = 1
+            # spk_data[i, 18] = 1
+            spk_data[i, 15] = 1
+            spk_data[i, 21] = 1
+            spk_data[i, 17] = 1
+            spk_data[i, 23] = 1
+
         time_sns += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
 
@@ -1246,7 +1254,9 @@ def run_sims(dt,
         # print((spk_data[i, :]))
         # spikes_raw = np.concatenate((np.array(spk_data[i, 0:12], dtype=bool), np.array(spk_data[i, 0:12], dtype=bool)))
         # print((spikes_raw))
+
         spikes_raw = np.array(spk_data[i, :], dtype=bool)
+
         time_spk += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
 
@@ -1259,9 +1269,6 @@ def run_sims(dt,
             # At comm interval, send spikes and receive sensory data
             if i * dt >= comm_index * comm_dt:
                 # # These limb arrays are able to isolate the hind/fore limbs (or any other set of limbs, depending on the configuration).               
-                # if fore_limbs:
-                #     limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
-                #     spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
 
                 # This function pauses the loop to wait for real time to catch up
