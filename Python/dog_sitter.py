@@ -1236,12 +1236,9 @@ def run_sims(dt,
         spk_data[i, :]    = sns_outputs[i, 48:72]
 
         if not fore_limbs: # Permanently activate the scapula if the forelimbs are not controlled.
-            # spk_data[i, 12] = 1
-            # spk_data[i, 18] = 1
-            spk_data[i, 15] = 1
-            spk_data[i, 21] = 1
-            spk_data[i, 17] = 1
-            spk_data[i, 23] = 1
+            for muscle in muscles_list:
+                if 'scapula_joint_flx_muscle' in muscle: 
+                    spk_data[i, muscle_indices[muscle]] = 1
 
         time_sns += clock.perf_counter() - time_mark
         time_mark = clock.perf_counter()
@@ -1476,7 +1473,7 @@ def main():
     }
 
     # simulation timestep parameters
-    end_time  = 5    # simulation end seconds
+    end_time  = 20    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
