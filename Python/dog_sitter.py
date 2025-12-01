@@ -855,6 +855,7 @@ def run_sims(dt,
              xml_path, 
              neuron_params,
              muscle_mutt=False,
+             fore_limbs=False,
              spike_port_name='name_goes_here',
              sense_port_name='name_goes_here',
              data_location=False):
@@ -916,12 +917,12 @@ def run_sims(dt,
     muscle_indices = {name: mujoco.mj_name2id(mujoco_sim, mujoco.mjtObj.mjOBJ_ACTUATOR, name) for name in  muscles_list}
 
     '''
-    #####################
-    MUJOCO INITIALIZATION
-    #####################
+    ##################
+    SNS INITIALIZATION
+    ##################
     '''
  
-    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt)
+    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt, fore_limbs=fore_limbs)
     
     print("... SNS Model Loaded")
     print("\n")
@@ -1257,14 +1258,10 @@ def run_sims(dt,
 
             # At comm interval, send spikes and receive sensory data
             if i * dt >= comm_index * comm_dt:
-                # These limb arrays are able to isolate the hind/fore limbs (or any other set of limbs, depending on the configuration).               
-                # limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
-                # limbs  = np.array([1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) 
-                # limbs    = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0], dtype=bool) 
-                # limbs  = np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #forelimbs
-                limbs    = np.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], dtype=bool) #alllimbs
-                # limbs    = np.array([1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], dtype=bool)
-                spk_packet = spk_packet & limbs
+                # # These limb arrays are able to isolate the hind/fore limbs (or any other set of limbs, depending on the configuration).               
+                # if fore_limbs:
+                #     limbs  = np.array([1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], dtype=bool) #hindlimbs
+                #     spk_packet = spk_packet & limbs
                 spk_msg_in_bytes = np.concatenate(([255], np.packbits(spk_packet)))
 
                 # This function pauses the loop to wait for real time to catch up
@@ -1322,8 +1319,8 @@ def run_sims(dt,
 
         # --- Simulation Communication: MuJoCo ---
         if not muscle_mutt:
-            for muscle in muscle_indices.keys():
-                mujoco_data.act[muscle_indices[muscle]] = stim_to_act(nonspk_data[i-1, mn_indices[muscle]])
+            # for muscle in muscle_indices.keys():
+            #     mujoco_data.act[muscle_indices[muscle]] = stim_to_act(nonspk_data[i-1, mn_indices[muscle]])
             for muscle in muscle_indices.keys():
                 if spk_data[i, muscle_indices[muscle]] == 1:
                     pulse_data[i:i+int(20 - 1), muscle_indices[muscle]] = 1
@@ -1447,6 +1444,7 @@ def main():
 
     muscle_mutt = False  # If True : configured for communication to Muscle Mutt robot
                          # If False: configured for communication to MuJoCo Model
+    fore_limbs = False
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM4" # port from Teensy which obtains sense data
@@ -1486,6 +1484,7 @@ def main():
                     neuron_params=neuron_params,
 
                     muscle_mutt=muscle_mutt,
+                    fore_limbs=fore_limbs,
                     spike_port_name=spike_port_name,
                     sense_port_name=sense_port_name,
                     data_location=data_location)

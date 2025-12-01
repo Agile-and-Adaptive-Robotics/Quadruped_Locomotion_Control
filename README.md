@@ -316,6 +316,8 @@ Decreasing the membrane capacitance also seems to simply increase the amplitude 
 This work will use a dictionary, created in the main file of the simulation code, to store neuron parameters.
 This is because I want to be able to edit the neuron parameters with the other simulation parameters, but package them neatly for their long journey to the SNS compilation in [sns_network_model.py](Python/sns_network_model.py)
 
+
+
 #### *Troubleshooting: Serial Paths*
 
 It is very likely that you will need to update the path and port names within the dog_sitter.py code.
