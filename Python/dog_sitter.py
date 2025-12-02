@@ -1154,11 +1154,29 @@ def run_sims(dt,
         sense_port.reset_output_buffer() # Clear any existing data in the buffer    
 
         # Potentiometer and pressure sensor calibration
-        sense_port.write(bytearray([255]))
+        sensor_calibration = input()
+        if sensor_calibration == 'yes':
+            input("Instructions: Straighten Muscle Mutt's joints so that the limbs are perpendicular to the frame. When ready, hit ENTER.")
+            # DATA STRUCTURES for raw sensor data (to be recorded at each timestep)
+            potentiometer_data_0   = {key: np.zeros(num_comms) for key in joint_list}
+            pressure_sensor_data_0 = {key: np.zeros(num_comms) for key in muscles_list}
+
+            sense_port.write(bytearray([255]))
+            for joint in potentiometer_data_0.keys():
+                potentiometer_data_0[joint] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+            for muscle in pressure_sensor_data_0.keys():
+                pressure_sensor_data_0[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+
+            np.save(f'Python/data/sensor_data/potentiometer_data.npy', potentiometer_data_0)
+            np.save(f'Python/data/sensor_data/pressure_sensor_data.npy', pressure_sensor_data_0)
+
+        potentiometer_data_0 = np.load(f'Python/data/sensor_data/potentiometer_data.npy')
+        pressure_sensor_data_0 = np.load(f'Python/data/sensor_data/pressure_sensor_data.npy')
+
         for joint in potentiometer_data.keys():
-            potentiometer_data[joint][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+            potentiometer_data[joint][0] = potentiometer_data_0[joint]
         for muscle in pressure_sensor_data.keys():
-            pressure_sensor_data[muscle][0] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
+            pressure_sensor_data[muscle][0] = pressure_sensor_data_0[muscle]
         
     
     else:
@@ -1475,7 +1493,7 @@ def main():
     }
 
     # simulation timestep parameters
-    end_time  = 1    # simulation end seconds
+    end_time  = 10    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
