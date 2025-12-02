@@ -20,7 +20,6 @@ import time as clock
 import time as world_clock
 import numpy as np
 # import pandas as pd
-# import modern_robotics as mr  # MJL: I HAVE TO COMMENT THIS OUT ON MY LAPTOP
 import mujoco
 import mujoco.viewer
 import mediapy as media
@@ -889,6 +888,9 @@ def run_sims(dt,
     Spikes are "and"ed on to each other and send at 50 Hz.
     '''
 
+    if muscle_mutt:
+        import modern_robotics as mr  # Avoids import which doesn't work on Mac
+
     # ----------------------
     # Initialization Section
     # ----------------------
@@ -1427,18 +1429,31 @@ def main():
         make_vid = False
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
-    sense_port_name = "COM4" # port from Teensy which obtains sense data
-    xml_path = 'python/quadruped_model.xml' # quadruped robot mujoco model path
-    # if muscle_mutt:
-    data_location = 'data' # location to save data
-    # else:
-    #     data_location = '/Users/jacklutz/Desktop/1_Academic/1_MJL_Research/2_Writing/MJL_Thesis/1_chapter/figures/results/data_MuJoCo'
+    sense_port_name = "COM6" # port from Teensy which obtains sense data
 
-    cpg_gsyn = 1.49167  # RG oscillation AMPLITUDE (small adjustments make a big difference!)
-    mem_cap =  10       # RG oscillation PHASE (membrane capacitance of HC neurons)
-    end_time = 5    # simulation end seconds
-    dt = 1/1000     # simulation step size (1 ms is pretty large)
-    num_steps = int(end_time/dt)    # Do not edit
+    xml_path      = 'python/quadruped_model.xml' # location to quadruped robot mujoco model
+    data_location = 'data'                       # location to save data
+
+    neuron_params = {
+        "Cm":         5,
+        "Gm":         1,
+        "Ena":        50,
+        "Er":         -60,
+        "Sm":         0.2,
+        "Sh":         -0.6,
+        "Km":         1,
+        "Kh":         0.5,
+        "Em":         -40,
+        "Eh":         -60,
+        "tauHmax":    500,
+        "Gna":        1.5,
+        "cpg_gsyn":   1.49167,
+    }
+
+    # simulation timestep parameters
+    end_time  = 20    # simulation end seconds
+    dt        = 1/1000     # simulation step size (1 ms is pretty large)
+    
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
     num_comms = int(comm_freq * end_time)
     Iapp =  np.zeros([num_steps,1]) # Do not edit

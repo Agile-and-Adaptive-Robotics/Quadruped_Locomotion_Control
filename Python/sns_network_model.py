@@ -192,8 +192,8 @@ def build_hindlimbs(Cm, cpg_gsyn=1.49167, dt = 0.01, feed_forward=True):
     motor_circuit = MotorCircuit()
 
     net.add_network(motor_circuit, suffix='_Hip') 
-    IaIN2MNflx = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)
-    IaIN2MNext = NonSpikingSynapse(max_conductance=0.0, reversal_potential=0, e_hi=-40, e_lo=-60)
+    IaIN2MNflx = NonSpikingSynapse(max_conductance=1, reversal_potential=0, e_hi=-40, e_lo=-60)
+    IaIN2MNext = NonSpikingSynapse(max_conductance=1, reversal_potential=0, e_hi=-40, e_lo=-60)
     net.add_neuron(interneuron, name='II_IN_ext_Hip', color='lightcoral') 
     net.add_neuron(interneuron, name='II_IN_flx_Hip', color='mediumseagreen') 
     net.add_input('II_IN_ext_Hip')
