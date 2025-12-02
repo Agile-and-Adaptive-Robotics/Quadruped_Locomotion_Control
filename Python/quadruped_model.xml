@@ -62,7 +62,7 @@
         <joint type="slide" range="-1 30" pos="0 0 0" axis="1 0 0" stiffness="0.2"/>
       </default>
       <default class="support_joint_vertical">
-        <joint type="slide" range="0.1 2" pos="0 0 0" axis="0 0 1" stiffness="0.2"/>
+        <joint type="slide" range="-0.1 2" pos="0 0 0" axis="0 0 1" stiffness="0.2"/>
       </default>
       <default class="support_joint_sagittal_rotation">
         <joint type="hinge" range="-8 -5" pos="0 0 0" axis="0 1 0" stiffness="0.2"/>
