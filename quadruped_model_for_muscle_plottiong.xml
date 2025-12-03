@@ -22,7 +22,7 @@
       <!-- geoms -->
       <geom type="box" condim="1" friction=".7" solimp=".9 .99 .003" solref=".015 1" material="body" group="1"/>
       <default class="support">
-        <geom fromto="-1 0 0 2 0 0"  size=".02"/>
+        <geom fromto="-1 0 0 20 0 0"  size=".02"/>
       </default>
       <default class="pulley_wheel_left">
         <geom type="cylinder" fromto="0 -0.05500000000000001 0 0 0 0" size="0.02"/>
@@ -58,7 +58,7 @@
       <!-- joints -->
       <joint type="hinge" damping=".01" stiffness="0" armature=".01" limited="true" solimplimit="0 .99 .01"/>
       <default class="support_joint_horizontal">
-        <joint type="slide" range="-1 30" pos="0 0 0" axis="1 0 0" stiffness="0.2"/>
+        <joint type="slide" range="-1 300" pos="0 0 0" axis="1 0 0" stiffness="0.2"/>
       </default>
       <default class="support_joint_vertical">
         <joint type="slide" range="0.1 2" pos="0 0 0" axis="0 0 1" stiffness="0.2"/>
