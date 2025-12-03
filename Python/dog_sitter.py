@@ -1492,7 +1492,7 @@ def main():
         "cpg_gsyn":   1.49167,
     }
 
-    # simulation timestep parameters
+    # simulation timestep parameters !
     end_time  = 10    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
