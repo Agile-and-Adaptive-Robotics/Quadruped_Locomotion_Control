@@ -1154,9 +1154,9 @@ def run_sims(dt,
         sense_port.reset_output_buffer() # Clear any existing data in the buffer    
 
         # Potentiometer and pressure sensor calibration
-        sensor_calibration = input()
+        sensor_calibration = input(" === Do you want to calibrate Muscle Mutt's sensors? \n === Type 'yes' if so. Hit [ENTER] to skip. \n === keyboard input: ")
         if sensor_calibration == 'yes':
-            input("Instructions: Straighten Muscle Mutt's joints so that the limbs are perpendicular to the frame. When ready, hit ENTER.")
+            input("\n === Instructions: Straighten Muscle Mutt's joints so that the limbs are perpendicular to the frame. \n === When ready, hit ENTER. \n")
             # DATA STRUCTURES for raw sensor data (to be recorded at each timestep)
             potentiometer_data_0   = {key: np.zeros(num_comms) for key in joint_list}
             pressure_sensor_data_0 = {key: np.zeros(num_comms) for key in muscles_list}
@@ -1170,8 +1170,9 @@ def run_sims(dt,
             np.save(f'Python/data/sensor_data/potentiometer_data.npy', potentiometer_data_0)
             np.save(f'Python/data/sensor_data/pressure_sensor_data.npy', pressure_sensor_data_0)
 
-        potentiometer_data_0 = np.load(f'Python/data/sensor_data/potentiometer_data.npy')
-        pressure_sensor_data_0 = np.load(f'Python/data/sensor_data/pressure_sensor_data.npy')
+        potentiometer_data_0 = np.load(f'Python/data/sensor_data/potentiometer_data.npy', allow_pickle=True)
+        pressure_sensor_data_0 = np.load(f'Python/data/sensor_data/pressure_sensor_data.npy', 
+        allow_pickle=True)
 
         for joint in potentiometer_data.keys():
             potentiometer_data[joint][0] = potentiometer_data_0[joint]
@@ -1466,7 +1467,7 @@ def main():
     dat_thread: handles data receiving and sending between the simulation and Teensy
     """
 
-    muscle_mutt = False  # If True : configured for communication to Muscle Mutt robot
+    muscle_mutt = True  # If True : configured for communication to Muscle Mutt robot
                          # If False: configured for communication to MuJoCo Model
     fore_limbs = False
 
