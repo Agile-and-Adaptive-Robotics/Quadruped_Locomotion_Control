@@ -1146,6 +1146,10 @@ def run_sims(dt,
         sense_port.reset_output_buffer() # Clear any existing data in the buffer    
 
         # Potentiometer and pressure sensor calibration
+        os.makedirs('Python/data/sensor_data', exist_ok="True")                     # Make the directory, if it's not already there
+        potentiometer_path = 'Python/data/sensor_data/potentiometer_data.json'       # Create paths to .json files
+        pressure_sensor_path = 'Python/data/sensor_data/pressure_sensor_data.json'
+    
         sensor_calibration = input(" === Do you want to calibrate Muscle Mutt's sensors? \n === Type 'yes' if so. Hit [ENTER] to skip. \n === keyboard input: ")
         if sensor_calibration == 'yes':
             input("\n === Instructions: Straighten Muscle Mutt's joints so that the limbs are perpendicular to the frame. \n === When ready, hit ENTER. \n")
@@ -1159,9 +1163,6 @@ def run_sims(dt,
             for muscle in pressure_sensor_data_0.keys():
                 pressure_sensor_data_0[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
 
-            os.makedirs('Python/data/sensor_data', exist_ok="True")                     # Make the directory, if it's not already there
-            potentiometer_path = 'Python/data/sensor_data/potentiometer_data.json'       # Create paths to .json files
-            pressure_sensor_path = 'Python/data/sensor_data/pressure_sensor_data.json'
             
             # json files do not support numpy arrays, so we need to convert them to lists and unconvert them later.
             # This function is a little bit of ChatGPT magic

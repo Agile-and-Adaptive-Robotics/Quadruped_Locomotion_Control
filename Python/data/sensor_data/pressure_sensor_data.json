@@ -1,9 +1,9 @@
 {
     "R_hip_joint_ext_muscle": [
-        24
+        18
     ],
     "R_hip_joint_flx_muscle": [
-        24
+        19
     ],
     "R_knee_joint_ext_muscle": [
         9
@@ -36,34 +36,34 @@
         9
     ],
     "R_scapula_joint_ext_muscle": [
-        9
-    ],
-    "R_scapula_joint_flx_muscle": [
         8
     ],
+    "R_scapula_joint_flx_muscle": [
+        9
+    ],
     "R_shoulder_joint_ext_muscle": [
-        24
+        18
     ],
     "R_shoulder_joint_flx_muscle": [
-        23
+        18
     ],
     "R_wrist_joint_ext_muscle": [
-        24
+        18
     ],
     "R_wrist_joint_flx_muscle": [
-        24
+        18
     ],
     "L_scapula_joint_ext_muscle": [
         10
     ],
     "L_scapula_joint_flx_muscle": [
-        9
+        10
     ],
     "L_shoulder_joint_ext_muscle": [
         10
     ],
     "L_shoulder_joint_flx_muscle": [
-        19
+        22
     ],
     "L_wrist_joint_ext_muscle": [
         10
