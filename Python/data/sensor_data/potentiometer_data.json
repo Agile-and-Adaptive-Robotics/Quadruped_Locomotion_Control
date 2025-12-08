@@ -1,0 +1,38 @@
+{
+    "L_hip_joint": [
+        69
+    ],
+    "L_knee_joint": [
+        146
+    ],
+    "L_ankle_joint": [
+        118
+    ],
+    "R_hip_joint": [
+        127
+    ],
+    "R_knee_joint": [
+        140
+    ],
+    "R_ankle_joint": [
+        86
+    ],
+    "L_scapula_joint": [
+        108
+    ],
+    "L_shoulder_joint": [
+        233
+    ],
+    "L_wrist_joint": [
+        0
+    ],
+    "R_scapula_joint": [
+        111
+    ],
+    "R_shoulder_joint": [
+        197
+    ],
+    "R_wrist_joint": [
+        163
+    ]
+}

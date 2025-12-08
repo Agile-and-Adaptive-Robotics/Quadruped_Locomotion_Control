@@ -1,10 +1,3 @@
-# =============================
-# Joint & Muscle Summary Plot (Generated with Copilot running ChatGPT-4.1)
-# =============================
-import os
-# ...existing code...
-# Existing code for plotting individual joint summaries
-# ...existing code...
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -14,6 +7,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import os
+import json
 import sys
 import math
 import time as clock
@@ -28,6 +22,7 @@ import scipy.signal
 from scipy.signal import find_peaks
 import serial
 from queue import Queue
+import modern_robotics as mr  # Avoids import which doesn't work on Mac
 from sns_network_model import build_net, spike_net
 
 
@@ -882,9 +877,6 @@ def run_sims(dt,
     Spikes are "and"ed on to each other and send at 50 Hz.
     '''
 
-    if muscle_mutt:
-        import modern_robotics as mr  # Avoids import which doesn't work on Mac
-
     # ----------------------
     # Initialization Section
     # ----------------------
@@ -1167,12 +1159,50 @@ def run_sims(dt,
             for muscle in pressure_sensor_data_0.keys():
                 pressure_sensor_data_0[muscle] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
 
-            np.save(f'Python/data/sensor_data/potentiometer_data.npy', potentiometer_data_0)
-            np.save(f'Python/data/sensor_data/pressure_sensor_data.npy', pressure_sensor_data_0)
+            os.makedirs('Python/data/sensor_data', exist_ok="True")                     # Make the directory, if it's not already there
+            potentiometer_path = 'Python/data/sensor_data/potentiometer_data.json'       # Create paths to .json files
+            pressure_sensor_path = 'Python/data/sensor_data/pressure_sensor_data.json'
+            
+            # json files do not support numpy arrays, so we need to convert them to lists and unconvert them later.
+            # This function is a little bit of ChatGPT magic
+            # it looks like it is a nested function which recursively dives into the dictionary structure and turns any arrays into lists, while leaving the dictionary structure intact
+            def to_json_safe(obj):
+                """Recursively convert numpy arrays inside dicts/lists to lists."""
+                if isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                if isinstance(obj, dict):
+                    return {k: to_json_safe(v) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [to_json_safe(item) for item in obj]
+                return obj
+            
+            potentiometer_json_safe = to_json_safe(potentiometer_data_0)
+            pressure_sensor_json_safe = to_json_safe(pressure_sensor_data_0)
 
-        potentiometer_data_0 = np.load(f'Python/data/sensor_data/potentiometer_data.npy', allow_pickle=True)
-        pressure_sensor_data_0 = np.load(f'Python/data/sensor_data/pressure_sensor_data.npy', 
-        allow_pickle=True)
+            with open(potentiometer_path, "w") as j:
+                json.dump(potentiometer_json_safe, j, indent=4)
+            with open(pressure_sensor_path, "w") as j:
+                json.dump(pressure_sensor_json_safe, j, indent=4)
+
+        def lists_to_ndarrays(obj):
+            """Convert lists representing arrays back to numpy arrays."""
+            if isinstance(obj, list):
+                # Only convert lists that *look like* arrays (numeric lists)
+                if all(isinstance(x, (int, float)) for x in obj):
+                    return np.array(obj)
+                else:
+                    return [lists_to_ndarrays(item) for item in obj]
+            if isinstance(obj, dict):
+                return {k: lists_to_ndarrays(v) for k, v in obj.items()}
+            return obj
+
+        with open(potentiometer_path, "r") as j:
+            potentiometer_load = json.load(j)
+        with open(pressure_sensor_path, "r") as j:
+            pressure_sensor_load = json.load(j)
+
+        potentiometer_data_0 = lists_to_ndarrays(potentiometer_load)
+        pressure_sensor_data_0 = lists_to_ndarrays(pressure_sensor_load)
 
         for joint in potentiometer_data.keys():
             potentiometer_data[joint][0] = potentiometer_data_0[joint]
