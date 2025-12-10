@@ -1525,7 +1525,7 @@ def main():
     }
 
     # simulation timestep parameters !
-    end_time  = 10    # simulation end seconds
+    end_time  = 50    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
