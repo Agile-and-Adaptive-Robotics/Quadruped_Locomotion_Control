@@ -22,7 +22,7 @@ import scipy.signal
 from scipy.signal import find_peaks
 import serial
 from queue import Queue
-import modern_robotics as mr  # Avoids import which doesn't work on Mac
+# import modern_robotics as mr  # Avoids import which doesn't work on Mac
 from sns_network_model import build_net, spike_net
 
 
@@ -848,8 +848,11 @@ def run_sims(dt,
              num_comms,
              xml_path, 
              neuron_params,
+
              muscle_mutt=False,
              fore_limbs=False,
+             hop_step=False, 
+
              spike_port_name='name_goes_here',
              sense_port_name='name_goes_here',
              data_location=False):
@@ -916,7 +919,7 @@ def run_sims(dt,
     ##################
     '''
  
-    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt, fore_limbs=fore_limbs)
+    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt, fore_limbs=fore_limbs, hop_step=hop_step)
     
     print("... SNS Model Loaded")
     print("\n")
@@ -1498,9 +1501,10 @@ def main():
     dat_thread: handles data receiving and sending between the simulation and Teensy
     """
 
-    muscle_mutt = True  # If True : configured for communication to Muscle Mutt robot
+    muscle_mutt = False  # If True : configured for communication to Muscle Mutt robot
                          # If False: configured for communication to MuJoCo Model
-    fore_limbs = False
+    fore_limbs = True
+    hop_step = False
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM6" # port from Teensy which obtains sense data
@@ -1525,7 +1529,7 @@ def main():
     }
 
     # simulation timestep parameters !
-    end_time  = 50    # simulation end seconds
+    end_time  = 5    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
@@ -1541,6 +1545,8 @@ def main():
 
                     muscle_mutt=muscle_mutt,
                     fore_limbs=fore_limbs,
+                    hop_step=hop_step, 
+
                     spike_port_name=spike_port_name,
                     sense_port_name=sense_port_name,
                     data_location=data_location)
@@ -1554,4 +1560,4 @@ if __name__ == '__main__':
     print("\n", "... Simulation and Storage Complete")
     print("\n")
     # print(muscle_indeces)
-    # plt.show()
+    # pplt.show()
