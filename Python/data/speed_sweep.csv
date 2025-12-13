@@ -1,0 +1,25 @@
+MS,MPT,fore limbs,velocity,rating hind (1-5),rating fore (1-5),comment
+1,1,1,0.5,3,5,"hind, great; fore, treadmill too slow"
+1,2,1,1,2,4,"hind, great; fore, trips"
+1,3,1,1.5,2,4,
+1,4,1,2.0,1,3,
+1,5,1,2.5,1,2,
+1,6,1,3.0,1.5,1.5,hind starts to lose pressure near the end
+1,7,1,3.5,1.5,1,looks like it’s starting to run
+1,8,1,4.0,1.5,1,more bouncy running
+1,9,1,4.5,2,2,starting to disregard treadmill
+1,10,1,5.0,2,2,treadmill is starting to whip legs back
+1,11,1,5.5,3,3,momentum is making the back legs hit against the ground mid-swing
+1,12,1,6.0,4,4,over-reaching
+2,1,0,0.5,5,NaN,stance phase too long
+2,2,0,1.0,5,NaN,hind limb slipping due to long stance phase
+2,3,0,1.5,4,NaN,hind limb slipping due to long stance phase
+2,4,0,2,3,NaN,"less slipping, but it’s still there"
+2,5,0,2.5,3,NaN,slipped at the beginning and then stabalized
+2,6,0,3,3,NaN,a bit lopsided walking
+2,7,0,3.5,4,NaN,starting to lock
+2,8,0,4,,NaN,
+2,9,0,4.5,,NaN,
+2,10,0,5,,NaN,
+2,11,0,5.5,,NaN,
+2,12,0,6,3,NaN,really swinging away
