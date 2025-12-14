@@ -356,7 +356,7 @@ def spike_net(dt = 0.01, fore_limbs = False):
 
     return spike_network
 
-def build_net(neuron_params, dt, fore_limbs, hop_step ):
+def build_net(neuron_params, dt, fore_limbs, hop_step, lateral_step):
 
     # Create the space for the entire network to live
     whole_net = Network('all_legs')
@@ -398,128 +398,6 @@ def build_net(neuron_params, dt, fore_limbs, hop_step ):
             inh_6_0:           Post-V0d synapse     # Inversely proportional to the period
             exc_0_1_ext:       Post-V3e synapse     # Proportional to the period
     """
-
-    if not hop_step:
-        #############################################
-        ############# HIND LIMBS ####################
-        #############################################
-        whole_net.add_neuron(base_neuron, 'V0d_hi_L')
-        whole_net.add_neuron(base_neuron, 'V3f_hi_L')
-        whole_net.add_neuron(base_neuron, 'V3e_hi_L')
-
-        whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_hi_L')
-        whole_net.add_connection(inh_6_0, 'V0d_hi_L', 'RG_HC_flx_hi_R')
-
-        whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3f_hi_L')
-        whole_net.add_connection(exc_0_1_flx, 'V3f_hi_L', 'RG_HC_flx_hi_R')
-
-        whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_hi_L')
-        whole_net.add_connection(exc_0_1_ext, 'V3e_hi_L', 'RG_HC_ext_hi_R')
-
-        whole_net.add_neuron(base_neuron, 'V0d_hi_R')
-        whole_net.add_neuron(base_neuron, 'V3f_hi_R')
-        whole_net.add_neuron(base_neuron, 'V3e_hi_R')
-
-        whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_hi_R')
-        whole_net.add_connection(inh_6_0, 'V0d_hi_R', 'RG_HC_flx_hi_L')
-
-        whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_R', 'V3f_hi_R')
-        whole_net.add_connection(exc_0_1_flx, 'V3f_hi_R', 'RG_HC_flx_hi_L')
-
-        whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_hi_R')
-        whole_net.add_connection(exc_0_1_ext, 'V3e_hi_R', 'RG_HC_ext_hi_L')
-
-
-        #############################################
-        ############# FORE LIMBS ####################
-        #############################################
-        whole_net.add_neuron(base_neuron, 'V0d_fo_L')
-        whole_net.add_neuron(base_neuron, 'V3f_fo_L')
-        whole_net.add_neuron(base_neuron, 'V3e_fo_L')
-
-        whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_fo_L')
-        whole_net.add_connection(inh_6_0, 'V0d_fo_L', 'RG_HC_flx_fo_R')
-
-        whole_net.add_connection(exc_1_0, 'RG_HC_flx_fo_L', 'V3f_fo_L')
-        whole_net.add_connection(exc_0_1_flx, 'V3f_fo_L', 'RG_HC_flx_fo_R')
-
-        whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_fo_L')
-        whole_net.add_connection(exc_0_1_ext, 'V3e_fo_L', 'RG_HC_ext_fo_R')
-
-        whole_net.add_neuron(base_neuron, 'V0d_fo_R')
-        whole_net.add_neuron(base_neuron, 'V3f_fo_R')
-        whole_net.add_neuron(base_neuron, 'V3e_fo_R')
-
-        whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_fo_R')
-        whole_net.add_connection(inh_6_0, 'V0d_fo_R', 'RG_HC_flx_fo_L')
-
-        whole_net.add_connection(exc_1_0, 'RG_HC_flx_fo_R', 'V3f_fo_R')
-        whole_net.add_connection(exc_0_1_flx, 'V3f_fo_R', 'RG_HC_flx_fo_L')
-
-        whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_fo_R')
-        whole_net.add_connection(exc_0_1_ext, 'V3e_fo_R', 'RG_HC_ext_fo_L')
-
-        if fore_limbs: # Connect the fore and hind limbs if forelimbs are being used.
-
-            #############################################
-            ############# LEFT LIMBS ####################
-            #############################################
-            whole_net.add_neuron(base_neuron, 'V0d_L_hi2fo')
-            whole_net.add_neuron(base_neuron, 'V3f_L_hi2fo')
-            whole_net.add_neuron(base_neuron, 'V3e_L_hi2fo')
-
-            whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_L_hi2fo')
-            whole_net.add_connection(inh_6_0, 'V0d_L_hi2fo', 'RG_HC_flx_fo_L')
-
-            whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3f_L_hi2fo')
-            whole_net.add_connection(exc_0_1_flx, 'V3f_L_hi2fo', 'RG_HC_flx_fo_L')
-
-            whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_L_hi2fo')
-            whole_net.add_connection(exc_0_1_ext, 'V3e_L_hi2fo', 'RG_HC_ext_fo_L')
-            
-            whole_net.add_neuron(base_neuron, 'V0d_L_fo2hi') 
-            whole_net.add_neuron(base_neuron, 'V3f_L_fo2hi')
-            whole_net.add_neuron(base_neuron, 'V3e_L_fo2hi')
-            
-            whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_L_fo2hi')
-            whole_net.add_connection(inh_6_0, 'V0d_L_fo2hi', 'RG_HC_flx_hi_L')
-
-            whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_L', 'V3f_L_fo2hi')
-            whole_net.add_connection(exc_0_1_flx, 'V3f_L_fo2hi', 'RG_HC_flx_hi_L')
-
-            whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_L_fo2hi')
-            whole_net.add_connection(exc_0_1_ext, 'V3e_L_fo2hi', 'RG_HC_ext_hi_L')
-
-
-            #############################################
-            ############# RIGHT LIMBS ###################
-            #############################################
-            whole_net.add_neuron(base_neuron, 'V0d_R_hi2fo')
-            whole_net.add_neuron(base_neuron, 'V3f_R_hi2fo')
-            whole_net.add_neuron(base_neuron, 'V3e_R_hi2fo')
-
-            whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_R_hi2fo')
-            whole_net.add_connection(inh_6_0, 'V0d_R_hi2fo', 'RG_HC_flx_fo_R')
-
-            whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_R', 'V3e_R_hi2fo')
-            whole_net.add_connection(exc_0_1_flx, 'V3f_R_hi2fo', 'RG_HC_flx_fo_R')
-
-            whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_R_hi2fo')
-            whole_net.add_connection(exc_0_1_ext, 'V3e_R_hi2fo', 'RG_HC_ext_fo_R')
-
-            whole_net.add_neuron(base_neuron, 'V0d_R_fo2hi')
-            whole_net.add_neuron(base_neuron, 'V3f_R_fo2hi')
-            whole_net.add_neuron(base_neuron, 'V3e_R_fo2hi')
-
-            whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_R_fo2hi')
-            whole_net.add_connection(inh_6_0, 'V0d_R_fo2hi', 'RG_HC_flx_hi_R')
-
-            whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_R', 'V3f_R_fo2hi')
-            whole_net.add_connection(exc_0_1_flx, 'V3f_R_fo2hi', 'RG_HC_flx_hi_R')
-
-            whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_R_fo2hi')
-            whole_net.add_connection(exc_0_1_ext, 'V3e_R_fo2hi', 'RG_HC_ext_hi_R')
-        
     if hop_step:
         #############################
         ############# HIND LIMBS ####################
@@ -641,6 +519,191 @@ def build_net(neuron_params, dt, fore_limbs, hop_step ):
             whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_R_fo2hi')
             whole_net.add_connection(exc_0_1_ext, 'V3e_R_fo2hi', 'RG_HC_ext_hi_L')
 
+    if not hop_step:
+        #############################################
+        ############# HIND LIMBS ####################
+        #############################################
+        whole_net.add_neuron(base_neuron, 'V0d_hi_L')
+        whole_net.add_neuron(base_neuron, 'V3f_hi_L')
+        whole_net.add_neuron(base_neuron, 'V3e_hi_L')
+
+        whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_hi_L')
+        whole_net.add_connection(inh_6_0, 'V0d_hi_L', 'RG_HC_flx_hi_R')
+
+        whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3f_hi_L')
+        whole_net.add_connection(exc_0_1_flx, 'V3f_hi_L', 'RG_HC_flx_hi_R')
+
+        whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_hi_L')
+        whole_net.add_connection(exc_0_1_ext, 'V3e_hi_L', 'RG_HC_ext_hi_R')
+
+        whole_net.add_neuron(base_neuron, 'V0d_hi_R')
+        whole_net.add_neuron(base_neuron, 'V3f_hi_R')
+        whole_net.add_neuron(base_neuron, 'V3e_hi_R')
+
+        whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_hi_R')
+        whole_net.add_connection(inh_6_0, 'V0d_hi_R', 'RG_HC_flx_hi_L')
+
+        whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_R', 'V3f_hi_R')
+        whole_net.add_connection(exc_0_1_flx, 'V3f_hi_R', 'RG_HC_flx_hi_L')
+
+        whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_hi_R')
+        whole_net.add_connection(exc_0_1_ext, 'V3e_hi_R', 'RG_HC_ext_hi_L')
+
+
+        #############################################
+        ############# FORE LIMBS ####################
+        #############################################
+        whole_net.add_neuron(base_neuron, 'V0d_fo_L')
+        whole_net.add_neuron(base_neuron, 'V3f_fo_L')
+        whole_net.add_neuron(base_neuron, 'V3e_fo_L')
+
+        whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_fo_L')
+        whole_net.add_connection(inh_6_0, 'V0d_fo_L', 'RG_HC_flx_fo_R')
+
+        whole_net.add_connection(exc_1_0, 'RG_HC_flx_fo_L', 'V3f_fo_L')
+        whole_net.add_connection(exc_0_1_flx, 'V3f_fo_L', 'RG_HC_flx_fo_R')
+
+        whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_fo_L')
+        whole_net.add_connection(exc_0_1_ext, 'V3e_fo_L', 'RG_HC_ext_fo_R')
+
+        whole_net.add_neuron(base_neuron, 'V0d_fo_R')
+        whole_net.add_neuron(base_neuron, 'V3f_fo_R')
+        whole_net.add_neuron(base_neuron, 'V3e_fo_R')
+
+        whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_fo_R')
+        whole_net.add_connection(inh_6_0, 'V0d_fo_R', 'RG_HC_flx_fo_L')
+
+        whole_net.add_connection(exc_1_0, 'RG_HC_flx_fo_R', 'V3f_fo_R')
+        whole_net.add_connection(exc_0_1_flx, 'V3f_fo_R', 'RG_HC_flx_fo_L')
+
+        whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_fo_R')
+        whole_net.add_connection(exc_0_1_ext, 'V3e_fo_R', 'RG_HC_ext_fo_L')
+
+        if fore_limbs: # Connect the fore and hind limbs if forelimbs are being used.
+
+            if lateral_step:
+
+                #############################################
+                ############# LEFT LIMBS ####################
+                #############################################
+                whole_net.add_neuron(base_neuron, 'V0d_L_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3f_L_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3e_L_hi2fo')
+
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_L_hi2fo')
+                whole_net.add_connection(inh_6_0, 'V0d_L_hi2fo', 'RG_HC_flx_fo_R')
+
+                whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3f_L_hi2fo')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_L_hi2fo', 'RG_HC_flx_fo_R')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_L_hi2fo')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_L_hi2fo', 'RG_HC_ext_fo_R')
+                
+                whole_net.add_neuron(base_neuron, 'V0d_L_fo2hi') 
+                whole_net.add_neuron(base_neuron, 'V3f_L_fo2hi')
+                whole_net.add_neuron(base_neuron, 'V3e_L_fo2hi')
+                
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_L_fo2hi')
+                whole_net.add_connection(inh_6_0, 'V0d_L_fo2hi', 'RG_HC_flx_hi_R')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_L', 'V3f_L_fo2hi')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_L_fo2hi', 'RG_HC_flx_hi_R')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_L_fo2hi')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_L_fo2hi', 'RG_HC_ext_hi_R')
+
+
+                #############################################
+                ############# RIGHT LIMBS ###################
+                #############################################
+                whole_net.add_neuron(base_neuron, 'V0d_R_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3f_R_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3e_R_hi2fo')
+
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_R_hi2fo')
+                whole_net.add_connection(inh_6_0, 'V0d_R_hi2fo', 'RG_HC_flx_fo_L')
+
+                whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_R', 'V3e_R_hi2fo')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_R_hi2fo', 'RG_HC_flx_fo_L')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_R_hi2fo')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_R_hi2fo', 'RG_HC_ext_fo_L')
+
+                whole_net.add_neuron(base_neuron, 'V0d_R_fo2hi')
+                whole_net.add_neuron(base_neuron, 'V3f_R_fo2hi')
+                whole_net.add_neuron(base_neuron, 'V3e_R_fo2hi')
+
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_R_fo2hi')
+                whole_net.add_connection(inh_6_0, 'V0d_R_fo2hi', 'RG_HC_flx_hi_L')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_R', 'V3f_R_fo2hi')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_R_fo2hi', 'RG_HC_flx_hi_L')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_R_fo2hi')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_R_fo2hi', 'RG_HC_ext_hi_L')
+
+            else:
+
+                #############################################
+                ############# LEFT LIMBS ####################
+                #############################################
+                whole_net.add_neuron(base_neuron, 'V0d_L_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3f_L_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3e_L_hi2fo')
+
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_L', 'V0d_L_hi2fo')
+                whole_net.add_connection(inh_6_0, 'V0d_L_hi2fo', 'RG_HC_flx_fo_L')
+
+                whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_L', 'V3f_L_hi2fo')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_L_hi2fo', 'RG_HC_flx_fo_L')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_L', 'V3e_L_hi2fo')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_L_hi2fo', 'RG_HC_ext_fo_L')
+                
+                whole_net.add_neuron(base_neuron, 'V0d_L_fo2hi') 
+                whole_net.add_neuron(base_neuron, 'V3f_L_fo2hi')
+                whole_net.add_neuron(base_neuron, 'V3e_L_fo2hi')
+                
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_L', 'V0d_L_fo2hi')
+                whole_net.add_connection(inh_6_0, 'V0d_L_fo2hi', 'RG_HC_flx_hi_L')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_L', 'V3f_L_fo2hi')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_L_fo2hi', 'RG_HC_flx_hi_L')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_L', 'V3e_L_fo2hi')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_L_fo2hi', 'RG_HC_ext_hi_L')
+
+
+                #############################################
+                ############# RIGHT LIMBS ###################
+                #############################################
+                whole_net.add_neuron(base_neuron, 'V0d_R_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3f_R_hi2fo')
+                whole_net.add_neuron(base_neuron, 'V3e_R_hi2fo')
+
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_hi_R', 'V0d_R_hi2fo')
+                whole_net.add_connection(inh_6_0, 'V0d_R_hi2fo', 'RG_HC_flx_fo_R')
+
+                whole_net.add_connection(exc_1_0, 'RG_HC_flx_hi_R', 'V3e_R_hi2fo')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_R_hi2fo', 'RG_HC_flx_fo_R')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_hi_R', 'V3e_R_hi2fo')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_R_hi2fo', 'RG_HC_ext_fo_R')
+
+                whole_net.add_neuron(base_neuron, 'V0d_R_fo2hi')
+                whole_net.add_neuron(base_neuron, 'V3f_R_fo2hi')
+                whole_net.add_neuron(base_neuron, 'V3e_R_fo2hi')
+
+                whole_net.add_connection(exc_2_5, 'RG_HC_flx_fo_R', 'V0d_R_fo2hi')
+                whole_net.add_connection(inh_6_0, 'V0d_R_fo2hi', 'RG_HC_flx_hi_R')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_flx_fo_R', 'V3f_R_fo2hi')
+                whole_net.add_connection(exc_0_1_flx, 'V3f_R_fo2hi', 'RG_HC_flx_hi_R')
+
+                whole_net.add_connection(exc_0_3, 'RG_HC_ext_fo_R', 'V3e_R_fo2hi')
+                whole_net.add_connection(exc_0_1_ext, 'V3e_R_fo2hi', 'RG_HC_ext_hi_R')
+        
+
     '''
     Add spiking network.
 
@@ -686,7 +749,7 @@ def build_net(neuron_params, dt, fore_limbs, hop_step ):
 
 
 def main():
-    sns_model = build_net(neuron_params, dt, fore_limbs, hop_step)
+    sns_model = build_net(neuron_params, dt, fore_limbs, hop_step, lateral_step)
     # print(sns_model.num_inputs)
     # print(sns_model.num_outputs)
 

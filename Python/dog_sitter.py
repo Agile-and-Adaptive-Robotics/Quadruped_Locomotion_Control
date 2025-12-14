@@ -22,7 +22,7 @@ import scipy.signal
 from scipy.signal import find_peaks
 import serial
 from queue import Queue
-# import modern_robotics as mr  # Avoids import which doesn't work on Mac
+import modern_robotics as mr  # Avoids import which doesn't work on Mac
 from sns_network_model import build_net, spike_net
 
 
@@ -852,6 +852,7 @@ def run_sims(dt,
              muscle_mutt=False,
              fore_limbs=False,
              hop_step=False, 
+             lateral_step=False,
 
              spike_port_name='name_goes_here',
              sense_port_name='name_goes_here',
@@ -919,7 +920,7 @@ def run_sims(dt,
     ##################
     '''
  
-    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt, fore_limbs=fore_limbs, hop_step=hop_step)
+    sns_model = build_net(neuron_params=neuron_params, dt=sns_dt, fore_limbs=fore_limbs, hop_step=hop_step, lateral_step=lateral_step)
     
     print("... SNS Model Loaded")
     print("\n")
@@ -1501,10 +1502,18 @@ def main():
     dat_thread: handles data receiving and sending between the simulation and Teensy
     """
 
-    muscle_mutt = False  # If True : configured for communication to Muscle Mutt robot
+    muscle_mutt = True  # If True : configured for communication to Muscle Mutt robot
                          # If False: configured for communication to MuJoCo Model
+
     fore_limbs = True
-    hop_step = False
+    hop_step = False     
+    lateral_step = True
+
+    # Conditions to make sure lateral step works.
+    if lateral_step:
+        fore_limbs = True
+    if lateral_step & hop_step:
+        print("Error: Choose hopstep OR lateral step.")
 
     spike_port_name = "COM5" # port to send spikes to the Teensy
     sense_port_name = "COM6" # port from Teensy which obtains sense data
@@ -1546,11 +1555,13 @@ def main():
                     muscle_mutt=muscle_mutt,
                     fore_limbs=fore_limbs,
                     hop_step=hop_step, 
+                    lateral_step=lateral_step,
 
                     spike_port_name=spike_port_name,
                     sense_port_name=sense_port_name,
                     data_location=data_location)
     return cost
+
 
 
 if __name__ == '__main__':
