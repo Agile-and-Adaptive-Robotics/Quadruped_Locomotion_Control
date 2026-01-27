@@ -1506,8 +1506,8 @@ def main():
                          # If False: configured for communication to MuJoCo Model
 
     fore_limbs = True
-    hop_step = False     
-    lateral_step = True
+    hop_step = True     
+    lateral_step = False
 
     # Conditions to make sure lateral step works.
     if lateral_step:
@@ -1538,7 +1538,7 @@ def main():
     }
 
     # simulation timestep parameters !
-    end_time  = 5    # simulation end seconds
+    end_time  = 20    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 
