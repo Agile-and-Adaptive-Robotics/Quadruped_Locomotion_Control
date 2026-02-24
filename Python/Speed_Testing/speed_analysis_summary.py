@@ -195,6 +195,7 @@ freq_fast, mag_fast     = compute_fft(fast_signal, fs)
 freq_medium, mag_medium = compute_fft(medium_signal, fs)
 freq_slow, mag_slow     = compute_fft(slow_signal, fs)
 
+linew = 4
 
 plt.subplots_adjust(
     # left=0.1,    # the left side of the subplots of the figure
@@ -205,17 +206,17 @@ plt.subplots_adjust(
     # hspace=0.1   # the amount of height reserved for white space between subplots
 )
 
-axs[0].plot(fast_time_004 + fast_offset_004, fast_angle_004['R_hip_joint']*360/np.pi, color=fast_colour, label='L angle')
-axs[0].plot(medium_time_004 + medium_offset_004, medium_angle_004['R_hip_joint']*360/np.pi, color=medium_colour, label='R angle')
-axs[0].plot(slow_time_004 + slow_offset_004, slow_angle_004['R_hip_joint']*360/np.pi, color=slow_colour, label='R angle')
+axs[0].plot(fast_time_004 + fast_offset_004, fast_angle_004['R_hip_joint']*360/np.pi, color=fast_colour, label='L angle', lw = linew)
+axs[0].plot(medium_time_004 + medium_offset_004, medium_angle_004['R_hip_joint']*360/np.pi, color=medium_colour, label='R angle', lw = linew)
+axs[0].plot(slow_time_004 + slow_offset_004, slow_angle_004['R_hip_joint']*360/np.pi, color=slow_colour, label='R angle', lw = linew)
 axs[0].set_title(r'$Joint~Angle~(\degree)$', fontsize = 26) 
-axs[1].plot(fast_time_005 + fast_offset_005, fast_MN_Activations_005[::20, L_hip_joint_ext_muscle_index], color=fast_colour, label='L activation')
-axs[1].plot(medium_time_005 + medium_offset_005, medium_MN_Activations_005[::20, L_hip_joint_ext_muscle_index], color=medium_colour, label='R activation')
-axs[1].plot(slow_time_005 + slow_offset_005, slow_MN_Activations_005[::20, L_hip_joint_ext_muscle_index], color=slow_colour, label='R activation')
+axs[1].plot(fast_time_005 + fast_offset_005, fast_MN_Activations_005[::20, L_hip_joint_ext_muscle_index], color=fast_colour, label='L activation', lw = linew)
+axs[1].plot(medium_time_005 + medium_offset_005, medium_MN_Activations_005[::20, L_hip_joint_ext_muscle_index], color=medium_colour, label='R activation', lw = linew)
+axs[1].plot(slow_time_005 + slow_offset_005, slow_MN_Activations_005[::20, L_hip_joint_ext_muscle_index], color=slow_colour, label='R activation', lw = linew)
 axs[1].set_title(r'$Extensor~Activation~(nV)$', fontsize = 26)
-axs[2].plot(freq_fast, mag_fast, color = fast_colour, label=r'$Fast$')
-axs[2].plot(freq_medium, mag_medium, color=medium_colour, label=r'$Medium$')
-axs[2].plot(freq_slow, mag_slow, color=slow_colour, label=r'$Slow$')
+axs[2].plot(freq_fast, mag_fast, color = fast_colour, label=r'$Fast$', lw = linew)
+axs[2].plot(freq_medium, mag_medium, color=medium_colour, label=r'$Medium$', lw = linew)
+axs[2].plot(freq_slow, mag_slow, color=slow_colour, label=r'$Slow$', lw = linew)
 axs[2].set_title(r'$FFT$', fontsize = 26)
 
 axs[0].set_xlim(8000,10000)
