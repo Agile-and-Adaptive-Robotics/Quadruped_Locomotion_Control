@@ -161,6 +161,9 @@ def plot_spk(time, data):
     Plot left/right muscle activities for all limbs (spiking output).
     6x2 grid: each row = muscle group, columns = extensor/flexor.
 
+                       Right Side
+                       0 - hip mn ext
+                       1 - hip mn flx
                        2 - knee mn ext
                        3 - knee mn flx
                        4 - ankle mn ext
@@ -1506,7 +1509,7 @@ def main():
                          # If False: configured for communication to MuJoCo Model
 
     fore_limbs = True
-    hop_step = True     
+    hop_step = False     
     lateral_step = False
 
     # Conditions to make sure lateral step works.
@@ -1533,8 +1536,8 @@ def main():
         "Em":         -40,
         "Eh":         -60,
         "tauHmax":    500,
-        "Gna":        1.5,
-        "cpg_gsyn":   1.49167,
+        "Gna":        1.3,
+        "cpg_gsyn":   1.49167, #Synaptic Conductance
     }
 
     # simulation timestep parameters !

@@ -100,7 +100,7 @@ def build_limbs(neuron_params):
     Eh =         neuron_params["Eh"]
     tauHmax =    neuron_params["tauHmax"]
     Gna =        neuron_params["Gna"]
-    cpg_gsyn =   neuron_params["cpg_gsyn"]
+    cpg_gsyn =   neuron_params["cpg_gsyn"] #Synaptic Conductance
 
     delEna = Ena
     delEm = Em
@@ -190,8 +190,8 @@ def build_limbs(neuron_params):
     motor_circuit = MotorCircuit()
 
     net.add_network(motor_circuit, suffix='_Hip') 
-    IaIN2MNflx = NonSpikingSynapse(max_conductance=0, reversal_potential=0, e_hi=-40, e_lo=-60)
-    IaIN2MNext = NonSpikingSynapse(max_conductance=0, reversal_potential=0, e_hi=-40, e_lo=-60)
+    IaIN2MNflx = NonSpikingSynapse(max_conductance=0.1, reversal_potential=0, e_hi=-40, e_lo=-60)
+    IaIN2MNext = NonSpikingSynapse(max_conductance=0.1, reversal_potential=0, e_hi=-40, e_lo=-60)
     net.add_neuron(interneuron, name='II_IN_ext_Hip', color='lightcoral') 
     net.add_neuron(interneuron, name='II_IN_flx_Hip', color='mediumseagreen') 
     net.add_input('II_IN_ext_Hip')
@@ -252,6 +252,8 @@ def build_limbs(neuron_params):
     HipII_flx2KA_PF_IN_ext = NonSpikingSynapse(max_conductance=0.2, reversal_potential=-70, e_hi=-35, e_lo=-55)
     HipII_ext2KA_PF_IN_flx = NonSpikingSynapse(max_conductance=0.8, reversal_potential=-70, e_hi=-40, e_lo=-50)
     AnkleIb_ext2KA_PF_IN_ext = NonSpikingSynapse(max_conductance=0.1, reversal_potential=-70, e_hi=-45, e_lo=-60)
+    AnkleIb_ext2RG_IN_ext = NonSpikingSynapse(max_conductance=0.01, reversal_potential=-30, e_hi=-55, e_lo=-80) ##excite
+    HipIa_flx2RG_IN_ext = NonSpikingSynapse(max_conductance=2, reversal_potential=-60, e_hi=-45, e_lo=-60) ##inhibit
 
     net.add_connection(HipII_flx2RG_IN_ext, 'II_IN_flx_Hip','RG_IN_ext')
     net.add_connection(HipII_ext2RG_IN_flx, 'II_IN_ext_Hip','RG_IN_flx')
@@ -260,6 +262,8 @@ def build_limbs(neuron_params):
     net.add_connection(HipII_flx2KA_PF_IN_ext, 'II_IN_flx_Hip', 'KA_PF_IN_ext')
     net.add_connection(HipII_ext2KA_PF_IN_flx, 'II_IN_ext_Hip', 'KA_PF_IN_flx')
     net.add_connection(AnkleIb_ext2KA_PF_IN_ext, 'IbIN_ext_Ankle', 'KA_PF_IN_ext')
+    net.add_connection(AnkleIb_ext2RG_IN_ext, 'IbIN_ext_Ankle', 'RG_IN_ext')
+    net.add_connection(HipIa_flx2RG_IN_ext, 'IaIN_flx_Hip', 'RG_IN_ext')
 
     net.add_output('RG_HC_ext')
     net.add_output('RG_HC_flx')
@@ -269,7 +273,7 @@ def build_limbs(neuron_params):
     net.add_output('KA_PF_HC_ext')
     net.add_output('KA_PF_HC_flx')
 
-    render(net, view=False, save=True, filename='python/fig_networks/jack_motor', img_format='png')
+    render(net, view=False, save=True, filename='python/fig_networks/leo_motor', img_format='png')
 
     return net
 
@@ -740,7 +744,7 @@ def build_net(neuron_params, dt, fore_limbs, hop_step, lateral_step):
     whole_net.add_connection(non2spk,'MN_ext_Ankle_fo_L','L_wrist_ext_muscle_forelimb_spk')
     whole_net.add_connection(non2spk,'MN_flx_Ankle_fo_L','L_wrist_flx_muscle_forelimb_spk')
     
-    render(whole_net, view=False, save=True, filename='Python/fig_networks/jack_sns.png', img_format='png')
+    render(whole_net, view=False, save=True, filename='Python/fig_networks/leo_sns.png', img_format='png')
 
     mn_labels = whole_net.outputs # TODO: Determine method by which to ehindlimbantly search for output names.
 
