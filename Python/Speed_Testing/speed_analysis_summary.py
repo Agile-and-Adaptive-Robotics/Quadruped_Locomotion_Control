@@ -163,8 +163,8 @@ slow_angle_006 = np.load(slow_angle_path_006, allow_pickle=True).item()
 # plt.figure() 
 fig, axs = plt.subplots(1, 3, figsize=(26, 8))
 
-fast_colour = 'blue'
-medium_colour = 'red'
+fast_colour = 'green'
+medium_colour = 'purple'
 slow_colour = 'k'
 
 fast_offset_005 = 0
