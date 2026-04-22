@@ -253,7 +253,7 @@ def build_limbs(neuron_params):
     HipII_ext2KA_PF_IN_flx = NonSpikingSynapse(max_conductance=0.8, reversal_potential=-70, e_hi=-40, e_lo=-50)
     AnkleIb_ext2KA_PF_IN_ext = NonSpikingSynapse(max_conductance=0.1, reversal_potential=-70, e_hi=-45, e_lo=-60)
     AnkleIb_ext2RG_IN_ext = NonSpikingSynapse(max_conductance=0.01, reversal_potential=-30, e_hi=-55, e_lo=-80) ##excite
-    HipIa_flx2RG_IN_ext = NonSpikingSynapse(max_conductance=2, reversal_potential=-60, e_hi=-45, e_lo=-60) ##inhibit
+    HipIa_flx2RG_IN_ext = NonSpikingSynapse(max_conductance=0, reversal_potential=-60, e_hi=-45, e_lo=-60) ##inhibit
 
     net.add_connection(HipII_flx2RG_IN_ext, 'II_IN_flx_Hip','RG_IN_ext')
     net.add_connection(HipII_ext2RG_IN_flx, 'II_IN_ext_Hip','RG_IN_flx')
