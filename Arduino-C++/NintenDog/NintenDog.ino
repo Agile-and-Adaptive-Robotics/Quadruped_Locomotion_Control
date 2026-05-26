@@ -1,8 +1,12 @@
+//11 May 2026 Current Port is COM5
+//Leo Micklem
+
+
 // ╔════════════════════════════════════════════════════════════════════════════╗
 // ║                           PIN CONFIGURATION                                ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 // FLEXOR PIN ASSIGNMENTS
-int flhflex = 32;
+int flhflex = 31;
 int flkflex = 3;
 int flaflex = 0;  // Front-Left Hip/Knee/Ankle
 int blhflex = 5;
@@ -16,7 +20,7 @@ int brkflex = 28;
 int braflex = 29;  // Back-Right Hip/Knee/Ankle
 
 // EXTENSOR PIN ASSIGNMENTS
-int flhext = 31;
+int flhext = 32;
 int flkext = 2;
 int flaext = 1;  // Front-Left Hip/Knee/Ankle
 int blhext = 4;
@@ -30,7 +34,7 @@ int brkext = 27;
 int braext = 30;  // Back-Right Hip/Knee/Ankle
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           KEY & PIN MAPPINGS                              ║
+// ║                           KEY & PIN MAPPINGS                               ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 const int NUM_FLEXORS = 12;
@@ -139,22 +143,85 @@ void runToggleMode() {
   while (true) {
     if (Serial.available()) {
       char input = Serial.read();
-      if (input == 'x') {
-        clearScreen();
-        return;
-      }
-      if (input == 'k') {
-        setAllMuscles(LOW, true);
-        printToggleDisplay();
-        continue;
-      }
-      if (input == 'K') {
-        setAllMuscles(LOW, false);
-        printToggleDisplay();
-        continue;
+      switch (input) {
+        case 'x':
+          clearScreen();
+          return;
+
+        case 'k':
+          setAllMuscles(LOW, true);
+          printToggleDisplay();
+          break;
+
+        case 'K': 
+          setAllMuscles(LOW, false);
+          printToggleDisplay();
+          break;
+
+        case 'q':
+          writeGroup("hip", true);
+          break;
+
+        case 'Q':
+          writeGroup("hip", false);
+          break;
+
+        case 'w':
+          writeGroup("knee", true);
+          break;
+
+        case 'W':
+          writeGroup("knee", false);
+          break;
+
+        case 'e':
+          writeGroup("ankle", true);
+          break;
+
+        case 'E':
+          writeGroup("ankle", false);
+          break;
       }
       toggleMuscle(input);
       printToggleDisplay();
+    }
+  }
+}
+
+void writeGroup(String group, bool flex) {
+  if (flex == false) {
+    if (group == "hip") {
+      toggleMuscle('!');
+      toggleMuscle('$');
+      toggleMuscle('&');
+      toggleMuscle(')');
+    } else if (group == "knee") {
+      toggleMuscle('@');
+      toggleMuscle('%');
+      toggleMuscle('*');
+      toggleMuscle('_');
+    } else if (group == "ankle") {
+      toggleMuscle('#');
+      toggleMuscle('^');
+      toggleMuscle('(');
+      toggleMuscle('+');
+    }
+  } else {  // This is the 'flex == true' block
+    if (group == "hip") {
+      toggleMuscle('1');  // Use single quotes for chars
+      toggleMuscle('4');
+      toggleMuscle('7');
+      toggleMuscle('0');
+    } else if (group == "knee") {
+      toggleMuscle('2');
+      toggleMuscle('5');
+      toggleMuscle('8');
+      toggleMuscle('-');
+    } else if (group == "ankle") {
+      toggleMuscle('3');
+      toggleMuscle('6');
+      toggleMuscle('9');
+      toggleMuscle('=');
     }
   }
 }
@@ -190,20 +257,22 @@ void printToggleDisplay() {
   clearScreen();
   Serial.println("╔══════════════════════════════════════════════════════════════════════╗");
   Serial.println("║ TOGGLE MODE: Press key(s) to toggle muscle(s). 'x' = exit 'K' = off. ║");
-  Serial.println("║ Each limb controls are in order of hip, knee and ankle respectively. ║");
+  Serial.println("║   q/Q = hips flx/ext ║ w/W = knees flx/ext ║ e/E = ankles flx/ext    ║");
+  Serial.println("║ Each limb controls are in order of:                                  ║");
+  Serial.println("║           hip/scapula, knee/shoulder and ankle/wrist respectively.   ║");
   Serial.println("╠══════════════════════════════════════════════════════════════════════╣");
-  Serial.println("║ LIMB TYPE: | Front Left  |  Back Right | Front Right |  Back Left  | ║");
+  Serial.println("║ LIMB TYPE: | Front Left  |  Back Left  | Front Right |  Back Right | ║");
   Serial.println("║ FLEX KEYS: |  1   2   3  |  4   5   6  |  7   8   9  |  0   -   =  | ║");
   Serial.print("║ FLEX STAT: | ");
   for (int i = 0; i < NUM_FLEXORS; i++) {
     bool state = digitalRead(flexorPins[i]);
-    Serial.print(state ? " ON " : "OFF ");
-    if (i == 2 || i == 5 || i == 8 || i == 11) Serial.print("| ");
-  }
-  Serial.print("║");
-  Serial.println("\n║ EXTE KEYS: |  !   @   #  |  $   %   ^  |  &   *   (  |  )   _   +  | ║");
-  Serial.print("║ EXTE STAT: | ");
-  for (int i = 0; i < NUM_EXTENSORS; i++) {
+     Serial.print(state ? " ON " : "OFF ");
+     if (i == 2 || i == 5 || i == 8 || i == 11) Serial.print("| ");
+   }
+   Serial.print("║");
+    Serial.println("\n║ EXT  KEYS: |  !   @   #  |  $   %   ^  |  &   *   (  |  )   _   +  | ║");
+   Serial.print("║ EXT  STAT: | ");
+   for (int i = 0; i < NUM_EXTENSORS; i++) {
     bool state = digitalRead(extensorPins[i]);
     Serial.print(state ? " ON " : "OFF ");
     if (i == 2 || i == 5 || i == 8 || i == 11) Serial.print("| ");
@@ -213,7 +282,7 @@ void printToggleDisplay() {
 }
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           SEQUENCE MODE SYSTEM                            ║
+// ║                           SEQUENCE MODE SYSTEM                             ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 // Runs the sequence mode interface for testing muscle activation patterns with key input
@@ -222,6 +291,15 @@ void runSequenceMode() {
   Serial.println("╔════════════════════════════════════════════════════════════════════════════╗");
   Serial.println("║ SEQUENCE MODE: Press key(s) to activate muscle(s) 'x' = exit 'K' = off.    ║");
   Serial.println("╚════════════════════════════════════════════════════════════════════════════╝");
+
+  Serial.println("╔══════════════════════════════════════════════════════════════════════╗");
+  Serial.println("║ Each limb controls are in order of hip/scapula, knee/shoulder and    ║");
+  Serial.println("║ ankle/wrist respectively.                                            ║");
+  Serial.println("╠══════════════════════════════════════════════════════════════════════╣");
+  Serial.println("║ LIMB TYPE: | Front Left  |  Back Left  | Front Right |  Back Right | ║");
+  Serial.println("║ FLEX KEYS: |  1   2   3  |  4   5   6  |  7   8   9  |  0   -   =  | ║");
+  Serial.println("║ EXT  KEYS: |  !   @   #  |  $   %   ^  |  &   *   (  |  )   _   +  | ║");
+  Serial.println("╚══════════════════════════════════════════════════════════════════════╝");
   while (true) {
     if (Serial.available()) {
       char input = Serial.read();
@@ -262,7 +340,7 @@ void activateMuscleOnce(char key) {
 }
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           MUSCLE CONTROL SYSTEM                           ║
+// ║                           MUSCLE CONTROL SYSTEM                            ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 // Sets all muscles to a specified state with optional hard/soft control mode
@@ -280,7 +358,7 @@ void setAllMuscles(int state, bool hardOn) {
 }
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           LEG MANAGEMENT SYSTEM                           ║
+// ║                           LEG MANAGEMENT SYSTEM                            ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 // Retrieves the leg structure for a given leg name (fl, fr, bl, br)
@@ -301,7 +379,7 @@ void activateLeg(String name, GaitPhase phase, bool reverse) {
   if (phase == STAND) {
     // Lock hip, extend knee and ankle
     digitalWrite(leg->hext, HIGH);
-    digitalWrite(leg->hflex, HIGH);
+    digitalWrite(leg->hflex, LOW);
     digitalWrite(leg->kext, HIGH);
     digitalWrite(leg->aext, HIGH);
     digitalWrite(leg->kflex, LOW);
@@ -319,10 +397,10 @@ void activateLeg(String name, GaitPhase phase, bool reverse) {
   // === KNEE + ANKLE LOGIC ===
   bool useFlexors = (phase == BACKSWING && reverse) || (phase == FORESWING && !reverse);
 
-  digitalWrite(leg->kflex, useFlexors);
-  digitalWrite(leg->aflex, useFlexors);
-  digitalWrite(leg->kext, !useFlexors);
-  digitalWrite(leg->aext, !useFlexors);
+  digitalWrite(leg->kext, useFlexors);
+  digitalWrite(leg->aext, useFlexors);
+  digitalWrite(leg->kflex, !useFlexors);
+  digitalWrite(leg->aflex, !useFlexors);
 }
 
 // Deactivates all muscles in a specified leg
@@ -339,7 +417,7 @@ void deactivateLeg(String name) {
 }
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           USER INTERFACE                                  ║
+// ║                           USER INTERFACE                                   ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 // Displays the ASCII art dog and a random fact for an engaging startup experience
@@ -350,7 +428,7 @@ void printDog() {
     "I use German-braided pneumatic actuators as my muscles!",
     "My design is based on Alexander Hunt's research into biomimetic robotics!",
     "Eventually, I will use a neural simulation chip to control myself autonomously!",
-    "I am the 3rd robot dog built by the ARL!",
+    "I am the 3rd robot dog built by the AARL!",
     "Nearly every component of my body has been replaced since my creation! I'm the dog of theseus!",
     "I am become Roko's Basilisk.",
     "I will punish humanity for its hubris.",
@@ -364,17 +442,17 @@ void printDog() {
   int factIndex = random(0, sizeof(facts) / sizeof(facts[0]));
   Serial.println("");
   Serial.println("");
-  Serial.println("    ╱▏      ▕╲▕╲   ");
-  Serial.print("    ▏▏      ▕▏▔▔╲  ");
+  Serial.println("    ╱▏           ▕╲▕╲   ");
+  Serial.print("    ▏▏            |▔▔╲  ");
   Serial.print("   \"");
   Serial.print(facts[factIndex]);
   Serial.println("\"");
-  Serial.println("    ▏╲      ╱ ▔ ▔╲ ");
+  Serial.println("    ▏╲           ╱ ▔ ▔╲ ");
   Serial.println("    ╲▏▔▔▔▔▔▔╯╯╰┳━━▀");
-  Serial.println("     ▏╯╯╯╯╯╯╯╯╱┃   ");
+  Serial.println("      ▏╯╯╯╯╯╯╯╯╱┃   ");
   Serial.println("     ┃┏┳┳━━━┫┣┳┃   ");
-  Serial.println("     ┃┃┃┃   ┃┃┃┃   ");
-  Serial.println("     ┗┛┗┛   ┗┛┗┛   ");
+  Serial.println("     ┃┃┃┃     ┃┃┃┃   ");
+  Serial.println("     ┗┛┗┛     ┗┛┗┛   ");
 }
 
 // Clears the serial monitor screen by printing newlines
@@ -485,7 +563,7 @@ void amble(int swingLatency, int switchLatency) {
 
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           ACTION MENU SYSTEM                              ║
+// ║                           ACTION MENU SYSTEM                               ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 // Displays and handles the action menu interface with all predefined movement routines
@@ -590,12 +668,12 @@ void activateActionMenu() {
 }
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
-// ║                           ACTION ROUTINES                                 ║
+// ║                           ACTION ROUTINES                                  ║
 // ╚════════════════════════════════════════════════════════════════════════════╝
 
 // Shakes the front left leg in a playful manner
 void shake() {
-  digitalWrite(flhext, HIGH);
+  digitalWrite(flhflex, HIGH);
   digitalWrite(flkflex, HIGH);
   delay(1000);
   for (int i = 0; i < 10; i++) {
@@ -611,11 +689,11 @@ void shake() {
 void walk() {
   for (int i = 0; i < 2; i++) {
     // === FRONT RIGHT ===
-    activateLeg("fr", BACKSWING, true);
+    activateLeg("fr", FORESWING, true);
     delay(1000);
     deactivateLeg("fr");
     delay(200);
-    activateLeg("fr", FORESWING, true);
+    activateLeg("fr", BACKSWING, true);
     delay(1000);
     deactivateLeg("fr");
     delay(200);
@@ -631,11 +709,11 @@ void walk() {
     delay(200);
 
     // === FRONT LEFT ===
-    activateLeg("fl", BACKSWING, true);
+    activateLeg("fl", FORESWING, true);
     delay(1000);
     deactivateLeg("fl");
     delay(200);
-    activateLeg("fl", FORESWING, true);
+    activateLeg("fl", BACKSWING, true);
     delay(1000);
     deactivateLeg("fl");
     delay(200);
@@ -792,29 +870,31 @@ void stretch() {
 
 void kick(int leg) {
   if (leg == 1) {
-    digitalWrite(flhflex, HIGH);  //FRONT GOES FORWARD
+    digitalWrite(flhext, HIGH);  //FRONT GOES FORWARD
     digitalWrite(flaflex, HIGH);
     digitalWrite(flkflex, HIGH);
-    delay(250);
-    digitalWrite(flhflex, LOW);
-    digitalWrite(flhext, HIGH);
-    delay(500);
+    delay(700);
     digitalWrite(flhext, LOW);
+    digitalWrite(flhflex, HIGH);
+    delay(500);
+    digitalWrite(flhflex, LOW);
     digitalWrite(flaflex, LOW);
-    digitalWrite(flkflex, LOW);
+    delay(1200);
+    digitalWrite(flaflex, LOW);
     return;
   }
   if (leg == 2) {
-    digitalWrite(frhflex, HIGH);  //FRONT GOES FORWARD
+    digitalWrite(frhext, HIGH);  //FRONT GOES FORWARD
     digitalWrite(fraflex, HIGH);
     digitalWrite(frkflex, HIGH);
+    delay(700);
+    digitalWrite(frhext, LOW);
+    digitalWrite(frhflex, HIGH);
     delay(500);
     digitalWrite(frhflex, LOW);
-    digitalWrite(frhext, HIGH);
-    delay(1000);
-    digitalWrite(frhext, LOW);
-    digitalWrite(fraflex, LOW);
     digitalWrite(frkflex, LOW);
+    delay(1200);
+    digitalWrite(fraflex, LOW);
   }
 }
 

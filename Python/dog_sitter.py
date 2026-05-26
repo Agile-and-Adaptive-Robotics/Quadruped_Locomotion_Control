@@ -119,14 +119,14 @@ def plot_sns(time, data):
         plt.subplot(6, 2, 2*i + 1)
         plt.plot(time, data[left_hind_indices[2*i]], label='ext_muscle', color='red')
         plt.plot(time, data[left_hind_indices[2*i+1]], label='flx_muscle', color='green')
-        plt.title(f'Right {titles_hind[i]}')
+        plt.title(f'Left {titles_hind[i]}')
         plt.legend()
 
         # Right side plots
         plt.subplot(6, 2, 2*i + 2)
         plt.plot(time, data[right_hind_indices[2*i]], label='ext_muscle', color='red')
         plt.plot(time, data[right_hind_indices[2*i+1]], label='flx_muscle', color='green')
-        plt.title(f'Left {titles_hind[i]}')
+        plt.title(f'Right {titles_hind[i]}')
         plt.legend()
 
     plt.tight_layout()
@@ -154,6 +154,36 @@ def plot_sns(time, data):
     # plt.figure()
     # plt.plot(time, data[])
     print("\n", "... SNS plots created")
+
+def plot_joint_angle(time, data):
+
+    titles_hind = ["L_hip_joint", "R_hip_joint", "L_knee_joint", "R_knee_joint", "L_ankle_joint", "R_ankle_joint"]
+    titles_fore = ["L_scapula_joint", "R_scapula_joint", "L_shoulder_joint", "R_shoulder_joint", "L_wrist_joint", "R_wrist_joint"]
+
+    plot_titles = ["Scapula", "Hip", "Shoulder", "Knee", "Wrist", "Ankle"]
+    
+    plt.figure(figsize=(15, 20))
+    for i in range(int(len(titles_fore)/2)):
+        #front legs
+        plt.subplot(3, 2, 2*i + 1)
+        plt.plot(time[::20], data[titles_fore[i]]*360/np.pi, label='Left', color='red')
+        plt.plot(time[::20], data[titles_fore[i+1]]*360/np.pi, label='Right', color='green')
+        plt.title(f'{plot_titles[2*i]}', fontsize = 20)
+        plt.legend(fontsize = 20)
+    
+        # back legs
+        plt.subplot(3, 2, 2*i + 2)
+        plt.plot(time[::20], data[titles_hind[i]]*360/np.pi, label='Left', color='red')
+        plt.plot(time[::20], data[titles_hind[i+1]]*360/np.pi, label='Right', color='green')
+        plt.title(f'{plot_titles[2*i+1]}', fontsize = 20)
+        plt.legend(fontsize = 20)
+        
+    plt.tight_layout()
+    plt.savefig('python/fig_plots/plot_joint_angles.png')
+
+
+    print("\n", "... Joint angle plots created")
+
 
 def plot_spk(time, data):
     """
@@ -1173,7 +1203,7 @@ def run_sims(dt,
             
             # json files do not support numpy arrays, so we need to convert them to lists and unconvert them later.
             # This function is a little bit of ChatGPT magic
-            # it looks like it is a nested function which recursively dives into the dictionary structure and turns any arrays into lists, while leaving the dictionary structure intact
+            # it looks like it is a nested function which recursively div  es into the dictionary structure and turns any arrays into lists, while leaving the dictionary structure intact
             def to_json_safe(obj):
                 """Recursively convert numpy arrays inside dicts/lists to lists."""
                 if isinstance(obj, np.ndarray):
@@ -1213,6 +1243,7 @@ def run_sims(dt,
         pressure_sensor_data_0 = lists_to_ndarrays(pressure_sensor_load)
 
         for joint in potentiometer_data.keys():
+            print(potentiometer_data_0[joint], joint)
             potentiometer_data[joint][0] = potentiometer_data_0[joint]
         for muscle in pressure_sensor_data.keys():
             pressure_sensor_data[muscle][0] = pressure_sensor_data_0[muscle]
@@ -1347,8 +1378,10 @@ def run_sims(dt,
                 sense_port.write(bytearray([255]))
                 for joint in potentiometer_data.keys():
                     if 'L_' in joint:
+                        print(np.frombuffer(sense_port.read(1), dtype=np.uint8), joint)
                         potentiometer_data[joint][comm_index] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
                     elif 'R_' in joint:
+                        print(np.frombuffer(sense_port.read(1), dtype=np.uint8), joint)
                         potentiometer_data[joint][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
                 for muscle in pressure_sensor_data.keys():
                     pressure_sensor_data[muscle][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
@@ -1454,6 +1487,7 @@ def run_sims(dt,
 
     plot_sns(t, nonspk_data.T)
     plot_spk(t, spk_data.T)
+    plot_joint_angle(t, joint_ang)
 
     if muscle_mutt:
         plot_legs_master_summary(np.arange(comm_index)*comm_dt*1000, joint_ang, muscle_len, muscle_vel, muscle_ten)
@@ -1509,7 +1543,7 @@ def main():
                          # If False: configured for communication to MuJoCo Model
 
     fore_limbs = True
-    hop_step = True     
+    hop_step = False     
     lateral_step = False
 
     # Conditions to make sure lateral step works.  
@@ -1541,7 +1575,7 @@ def main():
     }
 
     # simulation timestep parameters !
-    end_time  = 15    # simulation end seconds
+    end_time  = 10    # simulation end seconds
     dt        = 1/1000     # simulation step size (1 ms is pretty large)
     
     comm_freq = 50 # on the Windows, 50Hz communication frequency is ther max, real-time frequency. 

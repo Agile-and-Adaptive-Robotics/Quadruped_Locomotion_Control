@@ -1,74 +1,26 @@
 {
-    "R_hip_joint_ext_muscle": [
-        18
-    ],
-    "R_hip_joint_flx_muscle": [
-        19
-    ],
-    "R_knee_joint_ext_muscle": [
-        9
-    ],
-    "R_knee_joint_flx_muscle": [
-        9
-    ],
-    "R_ankle_joint_ext_muscle": [
-        8
-    ],
-    "R_ankle_joint_flx_muscle": [
-        10
-    ],
-    "L_hip_joint_ext_muscle": [
-        10
-    ],
-    "L_hip_joint_flx_muscle": [
-        9
-    ],
-    "L_knee_joint_ext_muscle": [
-        10
-    ],
-    "L_knee_joint_flx_muscle": [
-        9
-    ],
-    "L_ankle_joint_ext_muscle": [
-        9
-    ],
-    "L_ankle_joint_flx_muscle": [
-        9
-    ],
-    "R_scapula_joint_ext_muscle": [
-        8
-    ],
-    "R_scapula_joint_flx_muscle": [
-        9
-    ],
-    "R_shoulder_joint_ext_muscle": [
-        18
-    ],
-    "R_shoulder_joint_flx_muscle": [
-        18
-    ],
-    "R_wrist_joint_ext_muscle": [
-        18
-    ],
-    "R_wrist_joint_flx_muscle": [
-        18
-    ],
-    "L_scapula_joint_ext_muscle": [
-        10
-    ],
-    "L_scapula_joint_flx_muscle": [
-        10
-    ],
-    "L_shoulder_joint_ext_muscle": [
-        10
-    ],
-    "L_shoulder_joint_flx_muscle": [
-        22
-    ],
-    "L_wrist_joint_ext_muscle": [
-        10
-    ],
-    "L_wrist_joint_flx_muscle": [
-        10
-    ]
+    "R_hip_joint_ext_muscle": [],
+    "R_hip_joint_flx_muscle": [],
+    "R_knee_joint_ext_muscle": [],
+    "R_knee_joint_flx_muscle": [],
+    "R_ankle_joint_ext_muscle": [],
+    "R_ankle_joint_flx_muscle": [],
+    "L_hip_joint_ext_muscle": [],
+    "L_hip_joint_flx_muscle": [],
+    "L_knee_joint_ext_muscle": [],
+    "L_knee_joint_flx_muscle": [],
+    "L_ankle_joint_ext_muscle": [],
+    "L_ankle_joint_flx_muscle": [],
+    "R_scapula_joint_ext_muscle": [],
+    "R_scapula_joint_flx_muscle": [],
+    "R_shoulder_joint_ext_muscle": [],
+    "R_shoulder_joint_flx_muscle": [],
+    "R_wrist_joint_ext_muscle": [],
+    "R_wrist_joint_flx_muscle": [],
+    "L_scapula_joint_ext_muscle": [],
+    "L_scapula_joint_flx_muscle": [],
+    "L_shoulder_joint_ext_muscle": [],
+    "L_shoulder_joint_flx_muscle": [],
+    "L_wrist_joint_ext_muscle": [],
+    "L_wrist_joint_flx_muscle": []
 }
