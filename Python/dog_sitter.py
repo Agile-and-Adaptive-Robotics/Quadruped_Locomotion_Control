@@ -166,15 +166,15 @@ def plot_joint_angle(time, data):
     for i in range(int(len(titles_fore)/2)):
         #front legs
         plt.subplot(3, 2, 2*i + 1)
-        plt.plot(time[::20], data[titles_fore[i]]*360/np.pi, label='Left', color='red')
-        plt.plot(time[::20], data[titles_fore[i+1]]*360/np.pi, label='Right', color='green')
+        plt.plot(time[::20], data[titles_fore[2*i]]*360/np.pi, label=titles_fore[2*i], color='red')
+        plt.plot(time[::20], data[titles_fore[2*i+1]]*360/np.pi, label=titles_fore[2*i+1], color='green')
         plt.title(f'{plot_titles[2*i]}', fontsize = 20)
         plt.legend(fontsize = 20)
     
         # back legs
         plt.subplot(3, 2, 2*i + 2)
-        plt.plot(time[::20], data[titles_hind[i]]*360/np.pi, label='Left', color='red')
-        plt.plot(time[::20], data[titles_hind[i+1]]*360/np.pi, label='Right', color='green')
+        plt.plot(time[::20], data[titles_hind[2*i]]*360/np.pi, label=titles_hind[2*i], color='red')
+        plt.plot(time[::20], data[titles_hind[2*i+1]]*360/np.pi, label=titles_hind[2*i+1], color='green')
         plt.title(f'{plot_titles[2*i+1]}', fontsize = 20)
         plt.legend(fontsize = 20)
         
@@ -1243,7 +1243,10 @@ def run_sims(dt,
         pressure_sensor_data_0 = lists_to_ndarrays(pressure_sensor_load)
 
         for joint in potentiometer_data.keys():
-            print(potentiometer_data_0[joint], joint)
+            # print(potentiometer_data_0)
+            # print(type(potentiometer_data_0[joint]))
+            # print(np.shape(potentiometer_data_0[joint]))
+            # print(potentiometer_data_0[joint], joint)
             potentiometer_data[joint][0] = potentiometer_data_0[joint]
         for muscle in pressure_sensor_data.keys():
             pressure_sensor_data[muscle][0] = pressure_sensor_data_0[muscle]
@@ -1378,10 +1381,10 @@ def run_sims(dt,
                 sense_port.write(bytearray([255]))
                 for joint in potentiometer_data.keys():
                     if 'L_' in joint:
-                        print(np.frombuffer(sense_port.read(1), dtype=np.uint8), joint)
+                        # print(np.frombuffer(sense_port.read(1), dtype=np.uint8), joint)
                         potentiometer_data[joint][comm_index] = - np.frombuffer(sense_port.read(1), dtype=np.uint8)
                     elif 'R_' in joint:
-                        print(np.frombuffer(sense_port.read(1), dtype=np.uint8), joint)
+                        # print(np.frombuffer(sense_port.read(1), dtype=np.uint8), joint)
                         potentiometer_data[joint][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
                 for muscle in pressure_sensor_data.keys():
                     pressure_sensor_data[muscle][comm_index] = np.frombuffer(sense_port.read(1), dtype=np.uint8)
@@ -1544,7 +1547,7 @@ def main():
 
     fore_limbs = True
     hop_step = False     
-    lateral_step = False
+    lateral_step = True
 
     # Conditions to make sure lateral step works.  
     if lateral_step:

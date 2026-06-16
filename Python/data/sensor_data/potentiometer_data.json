@@ -1,14 +1,38 @@
 {
-    "L_hip_joint": [],
-    "L_knee_joint": [],
-    "L_ankle_joint": [],
-    "R_hip_joint": [],
-    "R_knee_joint": [],
-    "R_ankle_joint": [],
-    "L_scapula_joint": [],
-    "L_shoulder_joint": [],
-    "L_wrist_joint": [],
-    "R_scapula_joint": [],
-    "R_shoulder_joint": [],
-    "R_wrist_joint": []
+    "L_hip_joint": [
+        82
+    ],
+    "L_knee_joint": [
+        145
+    ],
+    "L_ankle_joint": [
+        94
+    ],
+    "R_hip_joint": [
+        119
+    ],
+    "R_knee_joint": [
+        139
+    ],
+    "R_ankle_joint": [
+        110
+    ],
+    "L_scapula_joint": [
+        116
+    ],
+    "L_shoulder_joint": [
+        232
+    ],
+    "L_wrist_joint": [
+        28
+    ],
+    "R_scapula_joint": [
+        101
+    ],
+    "R_shoulder_joint": [
+        195
+    ],
+    "R_wrist_joint": [
+        161
+    ]
 }

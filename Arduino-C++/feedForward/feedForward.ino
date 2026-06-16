@@ -49,8 +49,8 @@ int pin_valve_scapulaLEX  = 32;
 int pin_valve_scapulaLFL  = 31;
 int pin_valve_shoulderLEX = 2;
 int pin_valve_shoulderLFL = 3;
-int pin_valve_wristLEX    = 1;
-int pin_valve_wristLFL    = 0;
+int pin_valve_wristLEX    = 12;
+int pin_valve_wristLFL    = 11;
 
 
 // // Define the force sensor pins for each muscle object. Specific to the AARL QTB.

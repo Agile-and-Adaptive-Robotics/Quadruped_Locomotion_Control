@@ -8,7 +8,7 @@
 // FLEXOR PIN ASSIGNMENTS
 int flhflex = 31;
 int flkflex = 3;
-int flaflex = 0;  // Front-Left Hip/Knee/Ankle
+int flaflex = 11;  // Front-Left Hip/Knee/Ankle
 int blhflex = 5;
 int blkflex = 35;
 int blaflex = 34;  // Back-Left Hip/Knee/Ankle
@@ -22,7 +22,7 @@ int braflex = 29;  // Back-Right Hip/Knee/Ankle
 // EXTENSOR PIN ASSIGNMENTS
 int flhext = 32;
 int flkext = 2;
-int flaext = 1;  // Front-Left Hip/Knee/Ankle
+int flaext = 12;  // Front-Left Hip/Knee/Ankle
 int blhext = 4;
 int blkext = 36;
 int blaext = 33;  // Back-Left Hip/Knee/Ankle
