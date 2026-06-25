@@ -244,7 +244,11 @@ axs[0].set_xlabel(r"$Time~(s)$", fontsize = 26)
 axs[1].set_xlabel(r"$Time~(s)$", fontsize = 26)
 axs[2].set_xlabel(r"$Frequency~(Hz)$", fontsize = 26)
 
-plt.savefig(r"Python\Speed_Testing\speed_summary.png")
+# for ax in axs:
+#     ax.tick_params(axis='y', labelleft=False)
+#     ax.grid(True, which='major', linestyle='-', alpha=0.9)
+
+plt.savefig(r"Python\Speed_Testing\speed_summary.svg", format = 'svg', bbox_inches = 'tight')
 plt.show()
 
 print("Done")
